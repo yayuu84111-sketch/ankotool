@@ -1,0 +1,16 @@
+{
+  "1442671585889615874": {
+    "prefix": "!",
+    "auto_mod_enabled": true,
+    "join_raid_protection": true,
+    "antinuke_enabled": true,
+    "allow_application_commands": false,
+    "message_log_enabled": false,
+    "moderation_log_enabled": false,
+    "member_log_enabled": false,
+    "timeout_log_enabled": false,
+    "log_channel_id": null,
+    "raid_mode_enabled": false,
+    "image_spam_enabled": true
+  }
+}
