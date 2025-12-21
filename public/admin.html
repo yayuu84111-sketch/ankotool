@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者パネル - Discord Anko SPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 min-h-screen">
+    <div id="loginSection" class="min-h-screen flex items-center justify-center">
+        <div class="container mx-auto px-4">
+            <div class="max-w-md mx-auto">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-red-600 rounded-full mb-6 shadow-2xl">
+                        <i class="fas fa-shield-alt text-3xl text-white"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold text-white mb-4">管理者パネル</h1>
+                    <p class="text-gray-300">パスワードを入力してログイン</p>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                <i class="fas fa-lock mr-2"></i>管理者パスワード
+                            </label>
+                            <input 
+                                type="password" 
+                                id="adminPassword" 
+                                placeholder="パスワードを入力"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                            >
+                        </div>
+
+                        <button 
+                            type="submit"
+                            id="loginBtn"
+                            class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        >
+                            <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+                        </button>
+                    </form>
+
+                    <div id="loginError" class="hidden mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-exclamation-triangle text-red-400"></i>
+                            <span id="loginErrorText" class="text-red-200"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <a href="/" class="text-gray-400 hover:text-white text-sm transition-colors">
+                        <i class="fas fa-arrow-left mr-1"></i>メインページに戻る
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminSection" class="hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-4">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-red-600 rounded-full shadow-lg">
+                        <i class="fas fa-shield-alt text-xl text-white"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-white">管理者パネル</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-home mr-2"></i>メインページ
+                    </a>
+                    <a href="/ai.Face/" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-face-smile mr-2"></i>AI.顔診断
+                    </a>
+                    <button onclick="logout()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>ログアウト
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-6">
+                    <h2 class="text-xl font-bold text-white mb-6">
+                        <i class="fas fa-cog mr-2 text-yellow-400"></i>ライセンス設定
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-black/20 rounded-xl">
+                            <div>
+                                <h3 class="text-white font-semibold">ライセンス認証を有効にする</h3>
+                                <p class="text-gray-400 text-sm">ONにするとライセンスキーがないとサイトを使えなくなります</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="requireLicenseToggle" class="sr-only peer" onchange="toggleRequireLicense()">
+                                <div class="w-14 h-7 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="p-4 bg-black/20 rounded-xl">
+                            <h3 class="text-white font-semibold mb-3">
+                                <i class="fas fa-key mr-2"></i>パスワード変更
+                            </h3>
+                            <div class="flex gap-2">
+                                <input 
+                                    type="password" 
+                                    id="newPassword" 
+                                    placeholder="新しいパスワード（6文字以上）"
+                                    class="flex-1 px-4 py-2 bg-black/30 border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                <button onclick="changePassword()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    変更
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-6">
+                    <h2 class="text-xl font-bold text-white mb-6">
+                        <i class="fas fa-plus-circle mr-2 text-green-400"></i>新しいキーを作成
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-200 mb-2">発行先（任意）</label>
+                            <input 
+                                type="text" 
+                                id="issuedTo" 
+                                placeholder="例: ユーザー名やメモ"
+                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            >
+                        </div>
+                        <button onclick="createKey()" id="createKeyBtn" class="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold py-4 px-8 rounded-xl transition-all">
+                            <i class="fas fa-plus mr-2"></i>キーを作成
+                        </button>
+                        <div id="newKeyResult" class="hidden p-4 bg-green-500/20 border border-green-500/30 rounded-xl">
+                            <p class="text-green-200 text-sm mb-2">新しいキーが作成されました：</p>
+                            <div class="flex items-center gap-2">
+                                <code id="newKeyValue" class="flex-1 bg-black/30 px-3 py-2 rounded text-green-300 font-mono text-sm break-all"></code>
+                                <button onclick="copyNewKey()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded transition-colors">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-white">
+                        <i class="fas fa-list mr-2 text-blue-400"></i>ライセンスキー一覧
+                    </h2>
+                    <button onclick="refreshKeys()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>更新
+                    </button>
+                </div>
+
+                <div id="keysLoading" class="text-center py-8">
+                    <div class="inline-flex items-center space-x-3">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                        <span class="text-white">読み込み中...</span>
+                    </div>
+                </div>
+
+                <div id="keysEmpty" class="hidden text-center py-8">
+                    <i class="fas fa-inbox text-4xl text-gray-500 mb-4"></i>
+                    <p class="text-gray-400">ライセンスキーがありません</p>
+                </div>
+
+                <div id="keysList" class="hidden space-y-3 max-h-96 overflow-y-auto"></div>
+            </div>
+
+            <div class="mt-8 bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-6">
+                <h2 class="text-xl font-bold text-white mb-6">
+                    <i class="fas fa-discord mr-2 text-indigo-400"></i>Discord招待リンク自動スキャン
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                            <i class="fas fa-server mr-2"></i>Discord サーバーID
+                        </label>
+                        <input 
+                            type="text" 
+                            id="discordGuildId" 
+                            placeholder="1234567890"
+                            oninput="autoSaveDiscordSettings()"
+                            onchange="autoSaveDiscordSettings()"
+                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                            <i class="fas fa-user-secret mr-2"></i>ユーザートークン
+                        </label>
+                        <input 
+                            type="password" 
+                            id="discordUserToken" 
+                            placeholder="Discord user token"
+                            oninput="autoSaveDiscordSettings()"
+                            onchange="autoSaveDiscordSettings()"
+                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>何日前までのメッセージを取得？
+                        </label>
+                        <input 
+                            type="number" 
+                            id="discordDaysAgo" 
+                            placeholder="7"
+                            value="7"
+                            min="1"
+                            max="90"
+                            onchange="autoSaveDiscordSettings()"
+                            onblur="autoSaveDiscordSettings()"
+                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                            <i class="fas fa-hashtag mr-2"></i>チャンネル選択
+                        </label>
+                        <div class="flex gap-2">
+                            <button onclick="loadDiscordChannels()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>チャンネル取得
+                            </button>
+                        </div>
+                        <select 
+                            id="discordChannelIds" 
+                            multiple
+                            onchange="updateSelectedChannels(); autoSaveDiscordSettings()"
+                            onclick="updateSelectedChannels(); autoSaveDiscordSettings()"
+                            class="w-full mt-2 px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">チャンネルを選択...</option>
+                        </select>
+                        <div id="selectedChannelsList" class="mt-3 space-y-2">
+                        </div>
+                    </div>
+
+                    <!-- Channel Selection Modal -->
+                    <div id="channelSelectionModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div class="bg-gray-800 rounded-2xl shadow-2xl border border-white/20 p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
+                            <h3 class="text-2xl font-bold text-white mb-6">
+                                <i class="fas fa-hashtag mr-2 text-indigo-400"></i>スキャンするチャンネルを選択
+                            </h3>
+                            
+                            <div id="channelSelectionList" class="space-y-2 mb-6 max-h-64 overflow-y-auto">
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button onclick="confirmChannelSelection()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+                                    <i class="fas fa-check mr-2"></i>確認
+                                </button>
+                                <button onclick="closeChannelSelectionModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+                                    <i class="fas fa-times mr-2"></i>キャンセル
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="discordScanStatus" class="hidden p-4 bg-indigo-500/20 border border-indigo-500/30 rounded-xl">
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-spinner fa-spin text-indigo-400"></i>
+                                <span id="discordScanStatusText" class="text-indigo-200">スキャン中...</span>
+                            </div>
+                            <div id="discordScanResults" class="text-sm text-indigo-300 space-y-1 ml-6"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                            <i class="fas fa-hashtag mr-2"></i>送信先チャンネルID
+                        </label>
+                        <input 
+                            type="text" 
+                            id="sendTargetChannelId" 
+                            placeholder="チャンネルID"
+                            oninput="autoSaveDiscordSettings()"
+                            onchange="handleTargetChannelChange()"
+                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                        <p class="text-gray-400 text-xs mt-1">スキャン結果またはリンク監視の送信先</p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="scanDiscordInvites()" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all">
+                            <i class="fas fa-bolt mr-2"></i>今すぐスキャン
+                        </button>
+                        <button onclick="sendInvitesToChannel()" class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-xl transition-all">
+                            <i class="fas fa-paper-plane mr-2"></i>Botで送信
+                        </button>
+                        <button onclick="sendPreviousInvitesToNewChannel()" id="sendPreviousBtn" class="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-bold py-4 px-8 rounded-xl transition-all hidden">
+                            <i class="fas fa-history mr-2"></i>以前のリンクを送信
+                        </button>
+                    </div>
+
+                    <div class="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="text-white font-semibold text-lg">⏱️ 自動スキャン（1分ごと）</h4>
+                                <p class="text-gray-400 text-sm mt-1">1日前までのメッセージを自動取得</p>
+                            </div>
+                            <div id="autoScanStatusIndicator" class="text-right">
+                                <div id="autoScanStatusBadge" class="inline-block px-3 py-1 bg-red-500/30 border border-red-500/50 rounded-full">
+                                    <span class="text-red-200 text-sm font-semibold">🔴 停止中</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button type="button" id="autoScanToggleBtn" class="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all" onclick="startAutoScan();">
+                                <i class="fas fa-play mr-2"></i>自動スキャン開始
+                            </button>
+                        </div>
+
+                        <div id="autoScanInfo" class="hidden mt-4 space-y-3">
+                            <div class="p-3 bg-black/30 rounded-lg text-sm text-cyan-300">
+                                <div><i class="fas fa-hourglass-start text-cyan-400 mr-2"></i>経過時間: <span id="autoScanElapsedTime">0秒</span></div>
+                                <div><i class="fas fa-check-circle text-cyan-400 mr-2"></i>実行回数: <span id="autoScanRunCount">0</span>回</div>
+                                <div><i class="fas fa-link text-cyan-400 mr-2"></i>リンク総数: <span id="autoScanTotalLinks">0</span>件</div>
+                            </div>
+                            <div class="p-3 bg-black/40 rounded-lg text-xs text-cyan-300 max-h-48 overflow-y-auto">
+                                <div class="font-semibold mb-2 text-cyan-200">📋 スキャンログ:</div>
+                                <div id="autoScanLog" class="space-y-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sendInvitesSection" class="hidden mt-4 p-4 bg-indigo-500/20 border border-indigo-500/30 rounded-xl">
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-check-circle text-green-400"></i>
+                                <span id="sendResultText" class="text-indigo-200">スキャン完了</span>
+                            </div>
+                            <div id="sendResults" class="text-sm text-indigo-300 space-y-1 ml-6"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-white/20">
+                        <h3 class="text-lg font-bold text-white mb-4">
+                            <i class="fas fa-trash mr-2 text-red-400"></i>チャンネル削除
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4">取得したチャンネルを手動で削除できます</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                    <i class="fas fa-hashtag mr-2"></i>削除するチャンネルID
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="deleteChannelId" 
+                                    placeholder="チャンネルID"
+                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                >
+                            </div>
+
+                            <div>
+                                <button onclick="deleteDiscordChannel()" class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 px-6 rounded-xl transition-all">
+                                    <i class="fas fa-trash-alt mr-2"></i>チャンネルを削除
+                                </button>
+                            </div>
+
+                            <div id="deleteChannelStatus" class="hidden p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
+                                <div class="flex items-center space-x-3">
+                                    <i id="deleteStatusIcon" class="fas fa-spinner fa-spin text-red-400"></i>
+                                    <span id="deleteStatusText" class="text-red-200">削除中...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-4 right-4 hidden transform transition-all duration-300 translate-y-full opacity-0">
+        <div class="bg-gray-800 text-white px-6 py-3 rounded-xl shadow-xl flex items-center space-x-3">
+            <i id="toastIcon" class="fas fa-check-circle text-green-400"></i>
+            <span id="toastText"></span>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_SESSION_KEY = 'anko_admin_session';
+        let adminSession = localStorage.getItem(ADMIN_SESSION_KEY);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const password = document.getElementById('adminPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+            
+            if (!password) {
+                showLoginError('パスワードを入力してください');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>ログイン中...';
+            loginError.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    adminSession = data.adminSessionId;
+                    localStorage.setItem(ADMIN_SESSION_KEY, adminSession);
+                    showAdminPanel();
+                } else {
+                    showLoginError(data.error || 'ログインに失敗しました');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>ログイン';
+                }
+            } catch (error) {
+                showLoginError('サーバーとの通信に失敗しました');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>ログイン';
+            }
+        });
+
+        function showLoginError(message) {
+            const loginError = document.getElementById('loginError');
+            document.getElementById('loginErrorText').textContent = message;
+            loginError.classList.remove('hidden');
+        }
+
+        function showAdminPanel() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('adminSection').classList.remove('hidden');
+            loadSettings();
+            loadXAutoSettings();
+        }
+        
+        // Note: loadAutoScanConfig removed - use loadSettings() instead which handles all Discord settings
+        
+        async function saveAutoScanConfig() {
+            // Now handled by saveDiscordSettings() - save both to discord_settings.json and autoscan_panel_config.json
+            await saveDiscordSettings(true);
+            
+            // Also save to autoscan_panel_config.json for backward compatibility with Bot
+            try {
+                const guildIds = document.getElementById('discordGuildId').value.trim().split(/[,\n]+/).map(g => g.trim()).filter(g => g);
+                const userToken = document.getElementById('discordUserToken').value.trim();
+                const channelIds = Array.from(document.getElementById('discordChannelIds').selectedOptions).map(opt => opt.value);
+                const sendTargetChannelId = document.getElementById('sendTargetChannelId').value.trim();
+                
+                const response = await fetch('/api/autoscan-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({
+                        guildIds,
+                        userToken,
+                        channelIds,
+                        sendTargetChannelId,
+                        enabled: false
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('[SaveAutoScan] Saved config with channels:', channelIds);
+            } catch (e) {
+                console.warn('Auto scan config save failed:', e.message);
+            }
+        }
+        
+
+        function logout() {
+            localStorage.removeItem(ADMIN_SESSION_KEY);
+            adminSession = null;
+            location.reload();
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/admin/license-settings', {
+                    headers: { 'X-Admin-Session': adminSession }
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    if (response.status === 401) {
+                        logout();
+                        return;
+                    }
+                    throw new Error(data.error);
+                }
+                
+                document.getElementById('requireLicenseToggle').checked = data.requireLicense;
+                renderKeys(data.licenseKeys);
+                
+                // Discord settings load
+                try {
+                    const discordResponse = await fetch('/api/admin/discord-settings', {
+                        headers: { 'X-Admin-Session': adminSession }
+                    });
+                    if (discordResponse.ok) {
+                        const discordData = await discordResponse.json();
+                        if (discordData.success && discordData.settings) {
+                            const s = discordData.settings;
+                            if (s.discordGuildId) document.getElementById('discordGuildId').value = s.discordGuildId;
+                            if (s.discordUserToken) document.getElementById('discordUserToken').value = s.discordUserToken;
+                            if (s.discordDaysAgo) document.getElementById('discordDaysAgo').value = s.discordDaysAgo;
+                            if (s.sendTargetChannelId) document.getElementById('sendTargetChannelId').value = s.sendTargetChannelId;
+                            
+                            // Restore available channels list
+                            if (s.availableChannels && Array.isArray(s.availableChannels) && s.availableChannels.length > 0) {
+                                availableChannels = s.availableChannels;
+                                console.log('[LoadSettings] Restored', s.availableChannels.length, 'available channels');
+                            }
+                            
+                            // Restore selected channels without auto-fetching
+                            if (s.selectedChannels && s.selectedChannels.length > 0) {
+                                const select = document.getElementById('discordChannelIds');
+                                
+                                // Restore saved channel options
+                                if (s.selectedChannelInfo && Array.isArray(s.selectedChannelInfo)) {
+                                    // If we have channel info, use it to recreate options
+                                    select.innerHTML = '';
+                                    s.selectedChannelInfo.forEach(ch => {
+                                        const opt = document.createElement('option');
+                                        opt.value = ch.id;
+                                        opt.textContent = ch.textContent || `[${ch.guildName}] #${ch.name}`;
+                                        opt.selected = true;
+                                        select.appendChild(opt);
+                                    });
+                                } else {
+                                    // Fallback: try to select by ID only
+                                    Array.from(select.options).forEach(option => {
+                                        option.selected = s.selectedChannels.includes(option.value);
+                                    });
+                                }
+                                // Update the display list
+                                updateSelectedChannels();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Discord settings load skipped:', e.message);
+                }
+            } catch (error) {
+                console.error('Load settings error:', error);
+                showToast('設定の読み込みに失敗しました', 'error');
+            }
+        }
+
+        async function toggleRequireLicense() {
+            const toggle = document.getElementById('requireLicenseToggle');
+            const newValue = toggle.checked;
+            
+            try {
+                const response = await fetch('/api/admin/license-settings', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ requireLicense: newValue })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(newValue ? 'ライセンス認証を有効にしました' : 'ライセンス認証を無効にしました', 'success');
+                } else {
+                    toggle.checked = !newValue;
+                    showToast(data.error || '設定の更新に失敗しました', 'error');
+                }
+            } catch (error) {
+                toggle.checked = !newValue;
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function changePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            
+            if (!newPassword || newPassword.length < 6) {
+                showToast('パスワードは6文字以上必要です', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ newPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('newPassword').value = '';
+                    showToast('パスワードを変更しました', 'success');
+                } else {
+                    showToast(data.error || 'パスワードの変更に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function createKey() {
+            const issuedTo = document.getElementById('issuedTo').value;
+            const createBtn = document.getElementById('createKeyBtn');
+            const resultDiv = document.getElementById('newKeyResult');
+            
+            createBtn.disabled = true;
+            createBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>作成中...';
+            
+            try {
+                const response = await fetch('/api/admin/license-keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ issuedTo })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('newKeyValue').textContent = data.key;
+                    resultDiv.classList.remove('hidden');
+                    document.getElementById('issuedTo').value = '';
+                    refreshKeys();
+                    showToast('キーを作成しました', 'success');
+                } else {
+                    showToast(data.error || 'キーの作成に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+            
+            createBtn.disabled = false;
+            createBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>キーを作成';
+        }
+
+        function copyNewKey() {
+            const key = document.getElementById('newKeyValue').textContent;
+            navigator.clipboard.writeText(key);
+            showToast('キーをコピーしました', 'success');
+        }
+
+        function renderKeys(keys) {
+            const loading = document.getElementById('keysLoading');
+            const empty = document.getElementById('keysEmpty');
+            const list = document.getElementById('keysList');
+            
+            loading.classList.add('hidden');
+            
+            if (!keys || keys.length === 0) {
+                empty.classList.remove('hidden');
+                list.classList.add('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            list.classList.remove('hidden');
+            
+            list.innerHTML = keys.map(keyData => {
+                const statusBadge = keyData.revoked 
+                    ? '<span class="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs">無効</span>'
+                    : '<span class="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs">有効</span>';
+                
+                const boundBadge = keyData.isBound
+                    ? '<span class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs ml-2">使用中</span>'
+                    : '';
+                
+                const createdDate = new Date(keyData.createdAt).toLocaleString('ja-JP');
+                const lastUsed = keyData.lastUsedAt ? new Date(keyData.lastUsedAt).toLocaleString('ja-JP') : '未使用';
+                
+                return `
+                    <div class="p-4 bg-black/20 rounded-xl border border-white/10">
+                        <div class="flex items-start justify-between flex-wrap gap-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="bg-black/30 px-2 py-1 rounded text-blue-300 font-mono text-sm break-all">${keyData.key}</code>
+                                    <button onclick="copyKey('${keyData.key}')" class="text-gray-400 hover:text-white transition-colors">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    ${statusBadge}${boundBadge}
+                                    ${keyData.issuedTo ? `<span class="text-gray-400 text-xs">発行先: ${keyData.issuedTo}</span>` : ''}
+                                </div>
+                                <div class="text-gray-500 text-xs mt-2">
+                                    作成: ${createdDate} | 最終使用: ${lastUsed}
+                                </div>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                ${keyData.isBound ? `
+                                    <button onclick="unbindKey('${keyData.key}')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-unlink mr-1"></i>解除
+                                    </button>
+                                ` : ''}
+                                ${keyData.revoked ? `
+                                    <button onclick="reactivateKey('${keyData.key}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-check mr-1"></i>有効化
+                                    </button>
+                                ` : `
+                                    <button onclick="revokeKey('${keyData.key}')" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-ban mr-1"></i>無効化
+                                    </button>
+                                `}
+                                <button onclick="deleteKey('${keyData.key}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-trash mr-1"></i>削除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyKey(key) {
+            navigator.clipboard.writeText(key);
+            showToast('キーをコピーしました', 'success');
+        }
+
+        async function revokeKey(key) {
+            if (!confirm('このキーを無効化しますか？')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/license-keys/${encodeURIComponent(key)}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ action: 'revoke' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('キーを無効化しました', 'success');
+                    refreshKeys();
+                } else {
+                    showToast(data.error || '無効化に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function reactivateKey(key) {
+            try {
+                const response = await fetch(`/api/admin/license-keys/${encodeURIComponent(key)}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ action: 'reactivate' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('キーを有効化しました', 'success');
+                    refreshKeys();
+                } else {
+                    showToast(data.error || '有効化に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function unbindKey(key) {
+            if (!confirm('このキーのセッション紐づけを解除しますか？\n解除すると別のユーザーがこのキーを使えるようになります。')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/license-keys/${encodeURIComponent(key)}/unbind`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('セッションの紐づけを解除しました', 'success');
+                    refreshKeys();
+                } else {
+                    showToast(data.error || '解除に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function deleteKey(key) {
+            if (!confirm('このキーを完全に削除しますか？この操作は取り消せません。')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/license-keys/${encodeURIComponent(key)}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Session': adminSession }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('キーを削除しました', 'success');
+                    refreshKeys();
+                } else {
+                    showToast(data.error || '削除に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function refreshKeys() {
+            document.getElementById('keysLoading').classList.remove('hidden');
+            document.getElementById('keysList').classList.add('hidden');
+            document.getElementById('keysEmpty').classList.add('hidden');
+            await loadSettings();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastText');
+            
+            text.textContent = message;
+            icon.className = type === 'success' 
+                ? 'fas fa-check-circle text-green-400'
+                : 'fas fa-exclamation-circle text-red-400';
+            
+            toast.classList.remove('hidden', 'translate-y-full', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        async function loadXAutoSettings() {
+            try {
+                const response = await fetch('/api/admin/x-auto-settings', {
+                    headers: { 'X-Admin-Session': adminSession }
+                });
+                const data = await response.json();
+                
+                if (data.success && data.settings) {
+                    const s = data.settings;
+                    document.getElementById('xAutoServerId').value = s.serverId || '';
+                    document.getElementById('xAutoUserToken').value = s.userToken || '';
+                    document.getElementById('xAutoSearchQuery').value = s.searchQuery || 'discord.gg';
+                    document.getElementById('xAutoInterval').value = s.interval || 5;
+                    document.getElementById('xAutoEmail').value = s.xEmail || '';
+                    document.getElementById('xAutoPassword').value = s.xPassword || '';
+                    document.getElementById('xAutoEnabled').checked = s.enabled || false;
+                    
+                    if (s.channelId) {
+                        const select = document.getElementById('xAutoChannelId');
+                        const opt = document.createElement('option');
+                        opt.value = s.channelId;
+                        opt.textContent = `#${s.channelName || s.channelId}`;
+                        opt.selected = true;
+                        select.appendChild(opt);
+                    }
+                    
+                    updateXAutoStatus(s);
+                }
+            } catch (error) {
+                console.error('X Auto settings load error:', error);
+            }
+        }
+
+        let statusUpdateInterval = null;
+        
+        function updateXAutoStatus(settings) {
+            const statusDiv = document.getElementById('xAutoStatus');
+            const statusText = document.getElementById('xAutoStatusText');
+            const statusDetails = document.getElementById('xAutoStatusDetails');
+            const statusIcon = document.getElementById('xAutoStatusIcon');
+            
+            if (settings.enabled) {
+                statusDiv.classList.remove('hidden');
+                statusText.textContent = '✅ 自動取得が有効です';
+                
+                let details = '';
+                if (settings.currentEmail) details += `<div>👤 ユーザー: ${settings.currentEmail}</div>`;
+                if (settings.currentServer) details += `<div>🖥️ サーバーID: ${settings.currentServer}</div>`;
+                if (settings.nextCheckIn !== null) details += `<div>⏰ 次の検索: 残り${settings.nextCheckIn}分</div>`;
+                if (settings.lastCheck) details += `<div>⏱️ 最終チェック: ${new Date(settings.lastCheck).toLocaleString('ja-JP')}</div>`;
+                if (settings.isSearching) {
+                    details += `<div class="animate-pulse">🔍 検索中...</div>`;
+                    statusIcon.className = 'fas fa-sync fa-spin text-sky-400';
+                } else {
+                    statusIcon.className = 'fas fa-check-circle text-sky-400';
+                }
+                
+                statusDetails.innerHTML = details || '<div class="text-gray-400">ステータス情報なし</div>';
+                
+                if (!statusUpdateInterval) {
+                    statusUpdateInterval = setInterval(refreshXAutoStatus, 5000);
+                }
+            } else {
+                statusDiv.classList.add('hidden');
+                if (statusUpdateInterval) {
+                    clearInterval(statusUpdateInterval);
+                    statusUpdateInterval = null;
+                }
+            }
+        }
+        
+        async function refreshXAutoStatus() {
+            try {
+                const response = await fetch('/api/admin/x-auto-status', {
+                    headers: { 'X-Admin-Session': adminSession }
+                });
+                
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                if (data.success && data.status) {
+                    const statusText = document.getElementById('xAutoStatusText');
+                    const statusDetails = document.getElementById('xAutoStatusDetails');
+                    const statusIcon = document.getElementById('xAutoStatusIcon');
+                    
+                    let details = '';
+                    if (data.status.currentEmail) details += `<div>👤 ユーザー: ${data.status.currentEmail}</div>`;
+                    if (data.status.currentServer) details += `<div>🖥️ サーバーID: ${data.status.currentServer}</div>`;
+                    if (data.status.nextCheckIn !== null) details += `<div>⏰ 次の検索: 残り${data.status.nextCheckIn}分</div>`;
+                    if (data.status.lastCheck) details += `<div>⏱️ 最終チェック: ${new Date(data.status.lastCheck).toLocaleString('ja-JP')}</div>`;
+                    if (data.status.isSearching) {
+                        details += `<div class="animate-pulse">🔍 検索中...</div>`;
+                        statusIcon.className = 'fas fa-sync fa-spin text-sky-400';
+                    } else {
+                        statusIcon.className = 'fas fa-check-circle text-sky-400';
+                    }
+                    
+                    statusDetails.innerHTML = details || '<div class="text-gray-400">ステータス情報なし</div>';
+                }
+            } catch (error) {
+                console.error('Status refresh error:', error);
+            }
+        }
+
+        async function loadChannels() {
+            const serverId = document.getElementById('xAutoServerId').value;
+            const userToken = document.getElementById('xAutoUserToken').value;
+            
+            if (!serverId || !userToken) {
+                showToast('サーバーIDとユーザートークンを入力してください', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/x-auto-channels', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ serverId, userToken })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('xAutoChannelId');
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">チャンネルを選択...</option>';
+                    
+                    data.channels.forEach(ch => {
+                        const opt = document.createElement('option');
+                        opt.value = ch.id;
+                        opt.textContent = `#${ch.name}`;
+                        if (ch.id === currentValue) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                    
+                    showToast(`${data.channels.length}個のチャンネルを取得しました`, 'success');
+                } else {
+                    showToast(data.error || 'チャンネルの取得に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function runXAutoFetchNow() {
+            const serverId = document.getElementById('xAutoServerId').value;
+            const xEmail = document.getElementById('xAutoEmail').value;
+            const xPassword = document.getElementById('xAutoPassword').value;
+            
+            if (!serverId || !xEmail || !xPassword) {
+                showToast('サーバーID、Xメール、Xパスワードを入力してください', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('runNowBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>取得中...';
+            
+            try {
+                const response = await fetch('/api/admin/x-auto-fetch-now', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ serverId, xEmail, xPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`✅ ${data.linksFound}件のリンクを発見しました`, 'success');
+                    await refreshXAutoStatus();
+                } else {
+                    showToast(data.error || '取得に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-bolt mr-2"></i>今すぐ取得';
+        }
+
+        async function saveXAutoSettings() {
+            const btn = document.getElementById('saveXAutoBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>保存中...';
+            
+            const settings = {
+                serverId: document.getElementById('xAutoServerId').value,
+                userToken: document.getElementById('xAutoUserToken').value,
+                channelId: document.getElementById('xAutoChannelId').value,
+                searchQuery: document.getElementById('xAutoSearchQuery').value || 'discord.gg',
+                interval: parseInt(document.getElementById('xAutoInterval').value) || 5,
+                xEmail: document.getElementById('xAutoEmail').value,
+                xPassword: document.getElementById('xAutoPassword').value,
+                enabled: document.getElementById('xAutoEnabled').checked
+            };
+            
+            try {
+                const response = await fetch('/api/admin/x-auto-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('設定を保存しました', 'success');
+                    // ステータスを即座に更新
+                    await refreshXAutoStatus();
+                } else {
+                    showToast(data.error || '保存に失敗しました', 'error');
+                }
+            } catch (error) {
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save mr-2"></i>設定を保存';
+        }
+
+        let availableChannels = [];
+        let selectedChannelInfo = [];
+
+        async function loadDiscordChannels() {
+            const guildIds = document.getElementById('discordGuildId').value.trim();
+            const token = document.getElementById('discordUserToken').value.trim();
+            
+            if (!guildIds || !token) {
+                showToast('サーバーIDとユーザートークンを入力してください', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/discord-channels', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ guildIds: guildIds.split(/[,\n]+/).map(g => g.trim()).filter(g => g), token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableChannels = data.channels;
+                    showChannelSelectionModal();
+                    showToast(`${data.channels.length}個のチャンネルを取得しました`, 'success');
+                } else {
+                    showToast(data.error || 'チャンネルの取得に失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        function showChannelSelectionModal() {
+            const modal = document.getElementById('channelSelectionModal');
+            const listDiv = document.getElementById('channelSelectionList');
+            const select = document.getElementById('discordChannelIds');
+            const selectedIds = new Set(Array.from(select.selectedOptions).map(o => o.value));
+            
+            if (!availableChannels || availableChannels.length === 0) {
+                listDiv.innerHTML = '<p class="text-gray-400">チャンネルリストが見つかりません。チャンネル取得を実行してください。</p>';
+                modal.classList.remove('hidden');
+                return;
+            }
+            
+            listDiv.innerHTML = availableChannels.map(ch => `
+                <label class="flex items-center p-3 bg-black/30 border border-white/20 rounded-lg hover:border-indigo-500/50 cursor-pointer transition-colors">
+                    <input type="checkbox" value="${ch.id}" class="channel-select-checkbox" ${selectedIds.has(ch.id) ? 'checked' : ''} 
+                        onchange="autoSaveChannelSelection()"
+                        style="width: 18px; height: 18px; margin-right: 12px;">
+                    <span class="text-indigo-200">${ch.textContent || `[${ch.guildName}] #${ch.name}`}</span>
+                </label>
+            `).join('');
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function autoSaveChannelSelection() {
+            const checkboxes = document.querySelectorAll('.channel-select-checkbox');
+            const selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            const select = document.getElementById('discordChannelIds');
+            
+            // Update options
+            select.innerHTML = '';
+            selectedChannelInfo = [];
+            selectedIds.forEach(id => {
+                const channel = availableChannels.find(ch => ch.id === id);
+                if (channel) {
+                    const opt = document.createElement('option');
+                    opt.value = channel.id;
+                    opt.textContent = `[${channel.guildName}] #${channel.name}`;
+                    opt.selected = true;
+                    select.appendChild(opt);
+                    selectedChannelInfo.push({
+                        id: channel.id,
+                        name: channel.name,
+                        guildName: channel.guildName,
+                        textContent: opt.textContent
+                    });
+                }
+            });
+            
+            updateSelectedChannels();
+            saveAutoScanConfig();
+        }
+
+        function closeChannelSelectionModal() {
+            document.getElementById('channelSelectionModal').classList.add('hidden');
+        }
+
+        function confirmChannelSelection() {
+            // Selections are auto-saved when checked/unchecked
+            closeChannelSelectionModal();
+        }
+
+        function updateSelectedChannels() {
+            const select = document.getElementById('discordChannelIds');
+            const selectedOptions = Array.from(select.selectedOptions);
+            const listDiv = document.getElementById('selectedChannelsList');
+            
+            if (selectedOptions.length === 0) {
+                listDiv.innerHTML = '';
+                return;
+            }
+            
+            listDiv.innerHTML = selectedOptions.map(opt => `
+                <div class="flex items-center justify-between bg-indigo-500/20 border border-indigo-500/30 rounded-lg p-3">
+                    <span class="text-indigo-200">${opt.textContent}</span>
+                    <button type="button" onclick="removeChannelFromSelection('${opt.value}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                        <i class="fas fa-times mr-1"></i>削除
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeChannelFromSelection(channelId) {
+            const select = document.getElementById('discordChannelIds');
+            const option = Array.from(select.options).find(opt => opt.value === channelId);
+            if (option) {
+                option.selected = false;
+                updateSelectedChannels();
+                saveAutoScanConfig();
+            }
+        }
+
+        let lastScannedInvites = [];
+
+        function saveChannelId(channelId) {
+            // サーバーに送信先チャンネルIDを保存
+            autoSaveDiscordSettings();
+        }
+
+        function getChannelId() {
+            // 現在の入力フィールドから取得
+            return document.getElementById('sendTargetChannelId').value.trim();
+        }
+
+        async function autoSendInvites(channelId, invites) {
+            if (!channelId || !invites.length) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/send-discord-invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ 
+                        channelId, 
+                        invites: invites.map(inv => inv.url)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`✅ ${data.sent}/${data.total}件のリンクをBotで自動送信しました`, 'success');
+                    saveChannelId(channelId);
+                } else {
+                    console.error('Auto-send error:', data.error);
+                }
+            } catch (error) {
+                console.error('Auto-send error:', error);
+            }
+        }
+
+        let autoSaveTimeout;
+        async function autoSaveDiscordSettings() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                saveDiscordSettings(true);
+                // Note: Channel IDs are saved via saveAutoScanConfig() when channels are selected
+            }, 800);
+        }
+
+        async function loadDiscordSettings() {
+            try {
+                const response = await fetch('/api/admin/discord-settings', {
+                    method: 'GET',
+                    headers: { 'X-Admin-Session': adminSession }
+                });
+                
+                const data = await response.json();
+                if (data.success && data.settings) {
+                    const settings = data.settings;
+                    
+                    if (settings.discordGuildId) {
+                        document.getElementById('discordGuildId').value = settings.discordGuildId;
+                    }
+                    if (settings.discordUserToken) {
+                        document.getElementById('discordUserToken').value = settings.discordUserToken;
+                    }
+                    if (settings.discordDaysAgo) {
+                        document.getElementById('discordDaysAgo').value = settings.discordDaysAgo;
+                    }
+                    if (settings.sendTargetChannelId) {
+                        document.getElementById('sendTargetChannelId').value = settings.sendTargetChannelId;
+                        console.log('[LoadSettings] 送信先チャンネルID復元:', settings.sendTargetChannelId);
+                    }
+                    // テキストチャンネル選択を復元
+                    if (settings.selectedChannels && settings.selectedChannels.length > 0) {
+                        const select = document.getElementById('discordChannelIds');
+                        
+                        // Recreate options from saved channel info if available
+                        if (settings.selectedChannelInfo && Array.isArray(settings.selectedChannelInfo)) {
+                            select.innerHTML = '';
+                            settings.selectedChannelInfo.forEach(ch => {
+                                const opt = document.createElement('option');
+                                opt.value = ch.id;
+                                opt.textContent = ch.textContent || `[${ch.guildName}] #${ch.name}`;
+                                opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            selectedChannelInfo = settings.selectedChannelInfo;
+                        } else {
+                            // Fallback: try to select by ID
+                            Array.from(select.options).forEach(opt => {
+                                opt.selected = settings.selectedChannels.includes(opt.value);
+                            });
+                        }
+                        console.log('[LoadSettings] テキストチャンネル復元:', settings.selectedChannels);
+                    }
+                }
+            } catch (e) {
+                console.warn('Discord settings load skipped:', e.message);
+            }
+        }
+
+        async function saveDiscordSettings(isAutoSave = false) {
+            try {
+                const discordGuildId = document.getElementById('discordGuildId').value.trim();
+                const discordUserToken = document.getElementById('discordUserToken').value.trim();
+                const discordDaysAgo = document.getElementById('discordDaysAgo').value;
+                const sendTargetChannelId = document.getElementById('sendTargetChannelId').value.trim();
+                const channelsSelect = document.getElementById('discordChannelIds');
+                const selectedChannels = Array.from(channelsSelect.selectedOptions).map(opt => opt.value).filter(v => v);
+
+                // Use selectedChannelInfo if available, otherwise create from options
+                let channelInfo = selectedChannelInfo.length > 0 ? selectedChannelInfo : 
+                    Array.from(channelsSelect.selectedOptions).map(opt => ({
+                        id: opt.value,
+                        textContent: opt.textContent
+                    }));
+
+                const response = await fetch('/api/admin/discord-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({
+                        discordGuildId,
+                        discordUserToken,
+                        discordDaysAgo,
+                        sendTargetChannelId,
+                        selectedChannels,
+                        selectedChannelInfo: channelInfo
+                    })
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    console.warn('Discord settings save failed:', data.error);
+                } else {
+                    if (!isAutoSave) {
+                        showToast('✅ Discord設定を保存しました', 'success');
+                    }
+                    console.log('[SaveSettings] 完全保存 - トークン、サーバーID、チャンネル:', selectedChannels);
+                }
+            } catch (e) {
+                console.warn('Discord settings save skipped:', e.message);
+            }
+        }
+
+        async function scanDiscordInvites() {
+            const guildIds = document.getElementById('discordGuildId').value.trim().split(/[,\n]+/).map(g => g.trim()).filter(g => g);
+            const token = document.getElementById('discordUserToken').value.trim();
+            const days = parseInt(document.getElementById('discordDaysAgo').value) || 7;
+            
+            // Use selectedChannelInfo if available, otherwise get from select element
+            let channelIds = [];
+            if (selectedChannelInfo && selectedChannelInfo.length > 0) {
+                channelIds = selectedChannelInfo.map(ch => ch.id);
+            } else {
+                channelIds = Array.from(document.getElementById('discordChannelIds').selectedOptions).map(opt => opt.value).filter(v => v);
+            }
+            
+            if (!guildIds.length || !token) {
+                showToast('サーバーIDとユーザートークンを入力してください', 'error');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('discordScanStatus');
+            const statusText = document.getElementById('discordScanStatusText');
+            const resultsDiv = document.getElementById('discordScanResults');
+            
+            statusDiv.classList.remove('hidden');
+            resultsDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/admin/scan-discord-invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ guildIds, channelIds: channelIds.length ? channelIds : null, token, days })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    lastScannedInvites = data.invites || [];
+                    statusText.innerHTML = `✅ スキャン完了！ ${data.totalInvites}件の招待リンクを発見しました`;
+                    
+                    if (lastScannedInvites.length > 0) {
+                        const invitesList = lastScannedInvites.slice(0, 20).map(inv => 
+                            `<div class="p-2 bg-black/20 rounded text-sm">
+                                <div class="text-indigo-300 break-all">${inv.url}</div>
+                                <div class="text-gray-400 text-xs">チャンネル: #${inv.channel} | 投稿者: ${inv.author}</div>
+                            </div>`
+                        ).join('');
+                        resultsDiv.innerHTML = invitesList;
+                    }
+                    document.getElementById('sendInvitesSection').classList.remove('hidden');
+                    showToast(`スキャン完了: ${data.totalInvites}件発見`, 'success');
+
+                    // チャンネルIDが設定されていれば自動送信
+                    const savedChannelId = getChannelId();
+                    if (savedChannelId && lastScannedInvites.length > 0) {
+                        await autoSendInvites(savedChannelId, lastScannedInvites);
+                    }
+                } else {
+                    statusText.textContent = '❌ スキャンに失敗しました';
+                    showToast(data.error || 'スキャンに失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusText.textContent = '❌ エラーが発生しました';
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function sendInvitesToChannel() {
+            const channelId = document.getElementById('sendTargetChannelId').value.trim();
+            
+            if (!channelId) {
+                showToast('チャンネルIDを入力してください', 'error');
+                return;
+            }
+            
+            if (!lastScannedInvites.length) {
+                showToast('先にスキャンを実行してリンクを取得してください', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/send-discord-invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ 
+                        channelId, 
+                        invites: lastScannedInvites.map(inv => inv.url)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`✅ ${data.sent}件のリンクをBotで送信しました`, 'success');
+                    saveChannelId(channelId);
+                } else {
+                    showToast(data.error || '送信に失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        async function deleteDiscordChannel() {
+            const channelId = document.getElementById('deleteChannelId').value.trim();
+            const token = document.getElementById('discordUserToken').value.trim();
+            
+            if (!channelId) {
+                showToast('チャンネルIDを入力してください', 'error');
+                return;
+            }
+            
+            if (!token) {
+                showToast('ユーザートークンを入力してください', 'error');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('deleteChannelStatus');
+            const statusIcon = document.getElementById('deleteStatusIcon');
+            const statusText = document.getElementById('deleteStatusText');
+            
+            statusDiv.classList.remove('hidden');
+            statusIcon.className = 'fas fa-spinner fa-spin text-red-400';
+            statusText.textContent = '削除中...';
+            
+            try {
+                const response = await fetch('/api/admin/delete-channel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ channelId, token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusIcon.className = 'fas fa-check-circle text-green-400';
+                    statusText.textContent = `✅ チャンネル ${channelId} を削除しました`;
+                    showToast('✅ チャンネルを削除しました', 'success');
+                    document.getElementById('deleteChannelId').value = '';
+                    setTimeout(() => {
+                        statusDiv.classList.add('hidden');
+                    }, 3000);
+                } else {
+                    statusIcon.className = 'fas fa-times-circle text-red-400';
+                    statusText.textContent = `❌ ${data.error || '削除に失敗しました'}`;
+                    showToast(data.error || '削除に失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusIcon.className = 'fas fa-times-circle text-red-400';
+                statusText.textContent = '❌ エラーが発生しました';
+                showToast('サーバーとの通信に失敗しました', 'error');
+            }
+        }
+
+        let autoScanInterval = null;
+        let autoScanElapsedInterval = null;
+        let autoScanRunCount = 0;
+        let autoScanStartTime = null;
+        let autoScanSeenLinks = new Set(); // For preventing duplicates within the same scan cycle
+        let autoScanTotalUniqueLinks = 0;
+        let autoScanAllInvites = []; // Store all found invites for resending
+        let autoScanSentToChannels = {}; // Track {channelId: Set(inviteUrl)} to allow sending same link to different channels
+        const AUTOSCAN_STATE_KEY = 'anko_autoscan_state';
+        const AUTOSCAN_LINKS_KEY = 'anko_autoscan_links';
+
+        function addAutoScanLog(message, type = 'info') {
+            const logDiv = document.getElementById('autoScanLog');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ja-JP');
+            const iconClass = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<div><i class="fas fa-info-circle ${iconClass} mr-1"></i><span class="text-gray-300">[${timeStr}]</span> ${icon} ${message}</div>`;
+            logDiv.insertBefore(logEntry, logDiv.firstChild);
+            
+            // Keep only last 50 logs
+            while (logDiv.children.length > 50) {
+                logDiv.removeChild(logDiv.lastChild);
+            }
+        }
+
+        function updateAutoScanElapsedTime() {
+            if (!autoScanStartTime) return;
+            const elapsed = Math.floor((Date.now() - autoScanStartTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            let timeStr = '';
+            if (hours > 0) timeStr += `${hours}時間 `;
+            if (minutes > 0) timeStr += `${minutes}分 `;
+            timeStr += `${seconds}秒`;
+            
+            document.getElementById('autoScanElapsedTime').textContent = timeStr;
+        }
+
+        async function startAutoScan() {
+            const guildIds = document.getElementById('discordGuildId').value.trim().split(/[,\n]+/).map(g => g.trim()).filter(g => g);
+            const token = document.getElementById('discordUserToken').value.trim();
+            const sendTargetChannelId = document.getElementById('sendTargetChannelId').value.trim();
+            let channelIds = Array.from(document.getElementById('discordChannelIds').selectedOptions).map(opt => opt.value);
+
+            if (!guildIds.length || !token) {
+                showToast('サーバーIDとユーザートークンを入力してください', 'error');
+                return;
+            }
+
+            // If no channels explicitly selected, use all available channels from dropdown
+            if (!channelIds.length) {
+                const allOptions = document.getElementById('discordChannelIds').options;
+                if (allOptions.length > 0) {
+                    channelIds = Array.from(allOptions).map(opt => opt.value).filter(v => v);
+                }
+                
+                // If still no channels, notify user to load channels first
+                if (!channelIds.length) {
+                    showToast('先にチャンネル取得ボタンでチャンネルを読み込んでください', 'error');
+                    return;
+                }
+            }
+
+            if (!sendTargetChannelId) {
+                showToast('送信先チャンネルIDを入力してください', 'error');
+                return;
+            }
+
+            autoScanRunCount = 0;
+            autoScanStartTime = Date.now();
+            autoScanSeenLinks.clear();
+            autoScanTotalUniqueLinks = 0;
+            
+            const toggleBtn = document.getElementById('autoScanToggleBtn');
+            const badge = document.getElementById('autoScanStatusBadge');
+            const info = document.getElementById('autoScanInfo');
+
+            document.getElementById('autoScanLog').innerHTML = '';
+            addAutoScanLog('✅ 自動スキャンを開始しました（1分ごとに実行）', 'success');
+
+            autoScanElapsedInterval = setInterval(updateAutoScanElapsedTime, 1000);
+
+            toggleBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>自動スキャン停止';
+            toggleBtn.classList.remove('from-cyan-600', 'to-blue-600', 'hover:from-cyan-700', 'hover:to-blue-700');
+            toggleBtn.classList.add('from-red-600', 'to-orange-600', 'hover:from-red-700', 'hover:to-orange-700');
+            toggleBtn.onclick = stopAutoScan;
+            badge.innerHTML = '<span class="text-cyan-200 text-sm font-semibold">🟢 実行中</span>';
+            badge.className = 'inline-block px-3 py-1 bg-cyan-500/30 border border-cyan-500/50 rounded-full';
+            info.classList.remove('hidden');
+
+            // 最初のスキャンを即座に実行
+            await performAutoScan(guildIds, token, channelIds, sendTargetChannelId);
+
+            // 1分ごとに自動スキャンを実行
+            autoScanInterval = setInterval(async () => {
+                await performAutoScan(guildIds, token, channelIds, sendTargetChannelId);
+            }, 60000);
+
+            showToast('✅ 自動スキャンを開始しました（1分ごとに自動実行）', 'success');
+        }
+
+        async function performAutoScan(guildIds, token, channelIds, sendTargetChannelId) {
+            const days = parseInt(document.getElementById('discordDaysAgo').value) || 1;
+            
+            try {
+                const response = await fetch('/api/admin/scan-discord-invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ guildIds, channelIds: channelIds.length ? channelIds : null, token, days })
+                });
+                
+                const data = await response.json();
+                autoScanRunCount++;
+                document.getElementById('autoScanRunCount').textContent = autoScanRunCount;
+                
+                if (data.success) {
+                    const allInvites = data.invites || [];
+                    
+                    // フィルタ: 既に送信済みのリンクを除外
+                    const newInvites = allInvites.filter(inv => !autoScanSeenLinks.has(inv.url));
+                    
+                    // 新しいリンクを送信済みリストに追加
+                    newInvites.forEach(inv => autoScanSeenLinks.add(inv.url));
+                    
+                    // Track unique invites
+                    const newLinkCount = newInvites.length;
+                    autoScanTotalUniqueLinks += newLinkCount;
+                    document.getElementById('autoScanTotalLinks').textContent = autoScanTotalUniqueLinks;
+                    
+                    if (newLinkCount > 0) {
+                        addAutoScanLog(`✅ ${newLinkCount}件の新しいリンクを発見しました（重複を除いた）`, 'success');
+                        
+                        // 自動的に送信先チャンネルに送信
+                        try {
+                            const sendResponse = await fetch('/api/admin/send-discord-invites', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Admin-Session': adminSession
+                                },
+                                body: JSON.stringify({ 
+                                    channelId: sendTargetChannelId, 
+                                    invites: newInvites.map(inv => inv.url)
+                                })
+                            });
+                            
+                            const sendData = await sendResponse.json();
+                            if (sendData.success) {
+                                addAutoScanLog(`📤 ${sendData.sent}件のリンクを送信先チャンネルに自動送信しました`, 'success');
+                            } else {
+                                addAutoScanLog(`❌ 送信に失敗: ${sendData.error}`, 'error');
+                            }
+                        } catch (sendError) {
+                            console.error('Auto-send error:', sendError);
+                            addAutoScanLog(`❌ 送信エラー: ${sendError.message}`, 'error');
+                        }
+                    } else {
+                        // すべてのリンクが既に送信済みの場合
+                        const skippedCount = allInvites.length;
+                        if (skippedCount > 0) {
+                            addAutoScanLog(`ℹ️ ${skippedCount}件のリンクを発見しましたが、すべて既に送信済みです`, 'info');
+                        } else {
+                            addAutoScanLog('ℹ️ 新しいリンクはありません', 'info');
+                        }
+                    }
+                } else {
+                    addAutoScanLog(`❌ スキャン失敗: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Auto-scan error:', error);
+                addAutoScanLog(`❌ エラー: ${error.message}`, 'error');
+            }
+        }
+
+        async function stopAutoScan() {
+            if (autoScanInterval) {
+                clearInterval(autoScanInterval);
+                autoScanInterval = null;
+            }
+
+            if (autoScanElapsedInterval) {
+                clearInterval(autoScanElapsedInterval);
+                autoScanElapsedInterval = null;
+            }
+
+            addAutoScanLog('自動スキャンを停止しました', 'info');
+            autoScanStartTime = null;
+
+            const toggleBtn = document.getElementById('autoScanToggleBtn');
+            const badge = document.getElementById('autoScanStatusBadge');
+            const info = document.getElementById('autoScanInfo');
+
+            toggleBtn.innerHTML = '<i class="fas fa-play mr-2"></i>自動スキャン開始';
+            toggleBtn.classList.remove('from-red-600', 'to-orange-600', 'hover:from-red-700', 'hover:to-orange-700');
+            toggleBtn.classList.add('from-cyan-600', 'to-blue-600', 'hover:from-cyan-700', 'hover:to-blue-700');
+            toggleBtn.onclick = startAutoScan;
+            badge.innerHTML = '<span class="text-red-200 text-sm font-semibold">🔴 停止中</span>';
+            badge.className = 'inline-block px-3 py-1 bg-red-500/30 border border-red-500/50 rounded-full';
+            info.classList.add('hidden');
+            
+            localStorage.removeItem(AUTOSCAN_STATE_KEY);
+            localStorage.removeItem(AUTOSCAN_LINKS_KEY);
+            
+            showToast('⏹️ 自動スキャンを停止しました', 'success');
+        }
+
+        async function scanAutoDiscordInvites() {
+            const guildIds = document.getElementById('discordGuildId').value.trim().split(/[,\n]+/).map(g => g.trim()).filter(g => g);
+            const channelIds = Array.from(document.getElementById('discordChannelIds').selectedOptions).map(opt => opt.value);
+            const token = document.getElementById('discordUserToken').value.trim();
+            const days = 1;
+            
+            try {
+                const response = await fetch('/api/admin/scan-discord-invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ guildIds, channelIds: channelIds.length ? channelIds : null, token, days })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const newInvites = data.invites || [];
+                    let newCount = 0;
+                    
+                    // Filter out duplicate links
+                    const uniqueNewInvites = [];
+                    for (const inv of newInvites) {
+                        if (!autoScanSeenLinks.has(inv.url)) {
+                            autoScanSeenLinks.add(inv.url);
+                            uniqueNewInvites.push(inv);
+                            newCount++;
+                        }
+                    }
+                    
+                    autoScanTotalUniqueLinks += newCount;
+                    document.getElementById('autoScanTotalLinks').textContent = autoScanTotalUniqueLinks;
+                    
+                    if (newCount > 0) {
+                        lastScannedInvites = uniqueNewInvites;
+                        // Store all found invites for potential resending
+                        autoScanAllInvites = autoScanAllInvites.concat(uniqueNewInvites);
+                        addAutoScanLog(`✅ ${newCount}件の新しいリンクを検出 (重複: ${newInvites.length - newCount}件)`, 'success');
+                        
+                        // チャンネルIDが設定されていれば自動送信
+                        const targetChannelId = document.getElementById('sendTargetChannelId').value.trim();
+                        if (targetChannelId) {
+                            addAutoScanLog(`📤 Bot送信を開始: ${targetChannelId} へ ${newCount}件送信中...`, 'info');
+                            try {
+                                const sendResponse = await fetch('/api/admin/send-discord-invites', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Admin-Session': adminSession
+                                    },
+                                    body: JSON.stringify({ 
+                                        channelId: targetChannelId, 
+                                        invites: uniqueNewInvites.map(inv => inv.url)
+                                    })
+                                });
+                                
+                                const sendData = await sendResponse.json();
+                                
+                                if (sendData.success) {
+                                    // Track sent invites per channel
+                                    if (!autoScanSentToChannels[targetChannelId]) {
+                                        autoScanSentToChannels[targetChannelId] = new Set();
+                                    }
+                                    uniqueNewInvites.forEach(inv => {
+                                        autoScanSentToChannels[targetChannelId].add(inv.url);
+                                    });
+                                    
+                                    addAutoScanLog(`✅ Bot送信完了: ${sendData.sent}件のリンクを送信しました`, 'success');
+                                } else {
+                                    addAutoScanLog(`❌ Bot送信失敗: ${sendData.error || 'エラー'}`, 'error');
+                                }
+                            } catch (sendError) {
+                                addAutoScanLog(`❌ Bot送信エラー: ${sendError.message}`, 'error');
+                            }
+                        } else {
+                            addAutoScanLog('⚠️ 送信先チャンネルが設定されていません', 'info');
+                        }
+                    } else {
+                        addAutoScanLog('新しいリンクはありません', 'info');
+                    }
+                } else {
+                    addAutoScanLog('スキャン失敗: ' + (data.error || 'エラー'), 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addAutoScanLog('通信エラー: ' + error.message, 'error');
+            }
+        }
+
+
+        function handleTargetChannelChange() {
+            const newChannelId = document.getElementById('sendTargetChannelId').value.trim();
+            autoSaveDiscordSettings();
+            // Show "send previous" button if there are found invites
+            const sendPreviousBtn = document.getElementById('sendPreviousBtn');
+            if (autoScanAllInvites.length > 0 && newChannelId) {
+                sendPreviousBtn.classList.remove('hidden');
+            } else {
+                sendPreviousBtn.classList.add('hidden');
+            }
+        }
+
+        async function sendPreviousInvitesToNewChannel() {
+            const channelId = document.getElementById('sendTargetChannelId').value.trim();
+            if (!channelId) {
+                showToast('チャンネルIDを入力してください', 'error');
+                return;
+            }
+            if (autoScanAllInvites.length === 0) {
+                showToast('送信するリンクがありません', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/admin/send-discord-invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Session': adminSession
+                    },
+                    body: JSON.stringify({ 
+                        channelId: channelId, 
+                        invites: autoScanAllInvites.map(inv => inv.url)
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Track sent invites per channel (別チャンネルでも同じリンクを送信可能)
+                    if (!autoScanSentToChannels[channelId]) {
+                        autoScanSentToChannels[channelId] = new Set();
+                    }
+                    autoScanAllInvites.forEach(inv => {
+                        autoScanSentToChannels[channelId].add(inv.url);
+                    });
+                    
+                    addAutoScanLog(`✅ 以前のリンク送信: ${data.sent}件を新しいチャンネルに送信しました`, 'success');
+                    showToast(`✅ ${data.sent}件のリンクを送信しました`, 'success');
+                } else {
+                    addAutoScanLog(`❌ 送信失敗: ${data.error || 'エラー'}`, 'error');
+                    showToast(data.error || '送信に失敗しました', 'error');
+                }
+            } catch (error) {
+                addAutoScanLog(`❌ 送信エラー: ${error.message}`, 'error');
+                showToast('通信エラー: ' + error.message, 'error');
+            }
+        }
+
+        function restoreAutoScanState() {
+            const savedState = localStorage.getItem(AUTOSCAN_STATE_KEY);
+            const savedLinks = localStorage.getItem(AUTOSCAN_LINKS_KEY);
+            
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    if (state.enabled) {
+                        // Restore seen links
+                        if (savedLinks) {
+                            autoScanSeenLinks = new Set(JSON.parse(savedLinks));
+                        }
+                        autoScanTotalUniqueLinks = state.totalUniqueLinks || 0;
+                        autoScanRunCount = state.runCount || 0;
+                        autoScanStartTime = state.startTime ? parseInt(state.startTime) : Date.now();
+                        
+                        // Resume auto-scan intervals
+                        const toggleBtn = document.getElementById('autoScanToggleBtn');
+                        const badge = document.getElementById('autoScanStatusBadge');
+                        const info = document.getElementById('autoScanInfo');
+                        
+                        // Set up intervals
+                        autoScanInterval = setInterval(() => {
+                            autoScanRunCount++;
+                            document.getElementById('autoScanRunCount').textContent = autoScanRunCount;
+                            scanAutoDiscordInvites();
+                        }, 60000);
+                        
+                        autoScanElapsedInterval = setInterval(updateAutoScanElapsedTime, 1000);
+                        
+                        // Update UI
+                        toggleBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>自動スキャン停止';
+                        toggleBtn.classList.remove('from-cyan-600', 'to-blue-600', 'hover:from-cyan-700', 'hover:to-blue-700');
+                        toggleBtn.classList.add('from-red-600', 'to-orange-600', 'hover:from-red-700', 'hover:to-orange-700');
+                        badge.innerHTML = '<span class="text-cyan-200 text-sm font-semibold">🟢 実行中</span>';
+                        badge.className = 'inline-block px-3 py-1 bg-cyan-500/30 border border-cyan-500/50 rounded-full';
+                        info.classList.remove('hidden');
+                        document.getElementById('autoScanRunCount').textContent = autoScanRunCount;
+                        document.getElementById('autoScanTotalLinks').textContent = autoScanTotalUniqueLinks;
+                        
+                        // Run scan immediately
+                        scanAutoDiscordInvites();
+                        addAutoScanLog('自動スキャンが復帰しました', 'success');
+                    }
+                } catch (e) {
+                    console.error('Failed to restore auto-scan state:', e);
+                }
+            }
+        }
+
+        if (adminSession) {
+            loadDiscordSettings(); // Discord設定を復元（チャンネルIDも含む）
+            fetch('/api/admin/license-settings', {
+                headers: { 'X-Admin-Session': adminSession }
+            }).then(response => {
+                if (response.ok) {
+                    showAdminPanel();
+                    // Restore auto-scan after admin panel is shown
+                    setTimeout(restoreAutoScanState, 500);
+                } else {
+                    localStorage.removeItem(ADMIN_SESSION_KEY);
+                    adminSession = null;
+                }
+            }).catch(() => {
+                localStorage.removeItem(ADMIN_SESSION_KEY);
+                adminSession = null;
+            });
+        }
+    </script>
+</body>
+</html>

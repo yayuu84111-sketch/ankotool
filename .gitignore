@@ -1,0 +1,8 @@
+.env
+*.log
+.DS_Store
+.replit
+replit.nix
+data/
+storage_data/
+backups/

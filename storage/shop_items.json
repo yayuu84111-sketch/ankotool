@@ -1,0 +1,35 @@
+{
+  "items": {
+    "lucky_charm": {
+      "name": "ラッキーチャーム",
+      "price": 500,
+      "description": "幸運を呼ぶアイテム",
+      "emoji": "🍀"
+    },
+    "mystery_box": {
+      "name": "ミステリーボックス",
+      "price": 2000,
+      "description": "何が入っているかお楽しみ",
+      "emoji": "🎁"
+    },
+    "daikouhikikaekenn": {
+      "name": "代行引換券",
+      "price": 100000,
+      "description": "一回使うと代行してもらえます",
+      "emoji": "😀"
+    },
+    "ooatarii": {
+      "name": "大当たり",
+      "price": 0,
+      "description": "大当たり",
+      "emoji": "😀"
+    },
+    "tesr": {
+      "name": "てすと",
+      "price": 0,
+      "description": "てすと",
+      "emoji": "😃",
+      "visible": true
+    }
+  }
+}

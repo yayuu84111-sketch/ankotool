@@ -1,0 +1,30 @@
+{
+  "1442671585889615874": {
+    "enabled": false,
+    "channelId": "1449024285451489511",
+    "searchQuery": "discord.gg",
+    "interval": 5,
+    "xUsername": "kiseki_rewasd",
+    "xPassword": "aa119289621",
+    "xEmail": "yuu84111@gmail.com",
+    "lastCheck": null,
+    "postedLinks": [],
+    "japaneseOnly": false,
+    "requireKeywords": [],
+    "excludeKeywords": []
+  },
+  "1447045833173368955": {
+    "enabled": false,
+    "channelId": "1449625270695759933",
+    "searchQuery": "discord.gg",
+    "interval": 5,
+    "xUsername": "kiseki_rewasd",
+    "xPassword": "aa119289621",
+    "xEmail": "yuu84111@gmail.com",
+    "lastCheck": null,
+    "postedLinks": [],
+    "japaneseOnly": false,
+    "requireKeywords": [],
+    "excludeKeywords": []
+  }
+}

@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Anko SPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://hcaptcha.com/1/api.js?onload=joinerOnCaptchaLoad&render=explicit" async defer></script>
+    <script>
+        (async function checkLicense() {
+            const STORAGE_KEY_LICENSE = 'anko_license_key';
+            const STORAGE_KEY_SESSION = 'anko_session_id';
+            
+            try {
+                const settingsRes = await fetch('/api/license/settings-public');
+                const settings = await settingsRes.json();
+                
+                if (!settings.success || !settings.requireLicense) {
+                    return;
+                }
+                
+                const licenseKey = localStorage.getItem(STORAGE_KEY_LICENSE);
+                const sessionId = localStorage.getItem(STORAGE_KEY_SESSION);
+                
+                if (!licenseKey || !sessionId) {
+                    window.location.href = '/license.html';
+                    return;
+                }
+                
+                const statusRes = await fetch('/api/license/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Id': sessionId
+                    },
+                    body: JSON.stringify({ licenseKey })
+                });
+                
+                const status = await statusRes.json();
+                
+                if (!status.success || !status.valid) {
+                    localStorage.removeItem(STORAGE_KEY_LICENSE);
+                    localStorage.removeItem(STORAGE_KEY_SESSION);
+                    window.location.href = '/license.html';
+                }
+            } catch (error) {
+                console.error('License check error:', error);
+            }
+        })();
+    </script>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-12">
+            <div class="text-center flex-1">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-discord-blurple rounded-full mb-6 shadow-2xl">
+                    <i class="fab fa-discord text-3xl text-white"></i>
+                </div>
+                <h1 class="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    Discord Anko SPM
+                </h1>
+                <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                    あんこが作った最強スパムサイト!
+                </p>
+            </div>
+            <div class="flex items-center">
+                <a href="/ai.Face/" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center gap-2 no-underline">
+                    <i class="fas fa-face-smile"></i>AI.顔診断
+                </a>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+                <div class="flex border-b border-white/20">
+                    <button onclick="switchTab('members')" id="membersTabBtn" class="flex-1 py-4 px-6 text-white font-semibold bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-users mr-2"></i>メンバー取得
+                    </button>
+                    <button onclick="switchTab('joiner')" id="joinerTabBtn" class="flex-1 py-4 px-6 text-white font-semibold bg-white/10 hover:bg-white/20 transition-colors">
+                        <i class="fas fa-user-plus mr-2"></i>Joiner
+                    </button>
+                    <button onclick="switchTab('aanko')" id="aankoTabBtn" class="flex-1 py-4 px-6 text-white font-semibold bg-white/10 hover:bg-white/20 transition-colors">
+                        <i class="fas fa-robot mr-2"></i>/aanko Bot
+                    </button>
+                </div>
+
+                <div class="p-6 bg-white/5 border-b border-white/10">
+                    <div class="max-w-2xl mx-auto grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                <i class="fas fa-key mr-2"></i>ユーザートークン（複数可・1行1つ）
+                            </label>
+                            <textarea 
+                                id="userToken" 
+                                placeholder="トークンを入力（1行に1つ）&#10;複数トークンで同時送信&#10;例: MTQ0NDIzNDI2ODQy..."
+                                rows="3"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none font-mono text-xs"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                <i class="fas fa-server mr-2"></i>サーバーID
+                            </label>
+                            <input 
+                                type="text" 
+                                id="guildId" 
+                                placeholder="例: 123456789012345678"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            >
+                            <div class="mt-2 flex gap-2">
+                                <button 
+                                    onclick="leaveGuild()" 
+                                    id="leaveGuildBtn"
+                                    class="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm"
+                                >
+                                    <i class="fas fa-sign-out-alt mr-1"></i>サーバー退出
+                                </button>
+                            </div>
+                            <div id="leaveGuildResult" class="hidden mt-2 p-2 bg-black/30 rounded-lg text-sm">
+                                <span id="leaveGuildResultText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="externalAppSection" class="p-6 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 border-b border-white/10">
+                    <div class="max-w-2xl mx-auto">
+                        <h3 class="text-lg font-bold text-white mb-4">
+                            <i class="fas fa-puzzle-piece mr-2 text-indigo-400"></i>外部アプリを追加
+                        </h3>
+                        <div class="bg-black/20 rounded-xl p-4">
+                            <p class="text-xs text-gray-400 mb-3">上のトークンを使って、外部Discordアプリをあなたのアカウントの「マイアプリ」に追加します</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                        <i class="fas fa-link mr-2"></i>OAuth2認証URL
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="externalAppUrl" 
+                                        value="https://discord.com/oauth2/authorize?client_id=1449376396110598335"
+                                        placeholder="例: https://discord.com/oauth2/authorize?client_id=..."
+                                        class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-mono text-sm"
+                                    >
+                                    <p class="text-xs text-gray-500 mt-1">Discord OAuth2のURLをそのまま貼り付けてください</p>
+                                </div>
+                                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                                    <p class="text-green-300 text-xs">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        User Install方式で外部アプリを追加します（applications.commands スコープ）
+                                    </p>
+                                </div>
+                                <button 
+                                    onclick="addExternalApp()" 
+                                    id="addExternalAppBtn"
+                                    class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                                >
+                                    <i class="fas fa-plus-circle mr-2"></i>
+                                    マイアプリに追加
+                                </button>
+                                <div id="addExternalAppResult" class="hidden mt-2 p-3 bg-black/30 rounded-xl text-sm">
+                                    <div id="addExternalAppResultText"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="accountSettingsSection" class="p-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-b border-white/10">
+                    <div class="max-w-2xl mx-auto">
+                        <h3 class="text-lg font-bold text-white mb-4">
+                            <i class="fas fa-user-cog mr-2 text-purple-400"></i>アカウント設定
+                        </h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-black/20 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                    <i class="fas fa-id-card mr-2"></i>サーバーニックネームを変更
+                                </label>
+                                <p class="text-xs text-gray-400 mb-2">上のサーバーIDで指定したサーバーでのニックネームを変更します</p>
+                                <div class="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        id="newDisplayName" 
+                                        placeholder="新しいニックネーム（空で削除）"
+                                        maxlength="32"
+                                        class="flex-1 px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                    >
+                                    <button 
+                                        onclick="updateDisplayName()" 
+                                        id="updateDisplayNameBtn"
+                                        class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-2 px-4 rounded-xl transition-all"
+                                    >
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                                <div id="displayNameResult" class="hidden mt-2 p-2 bg-black/30 rounded-lg text-sm">
+                                    <span id="displayNameResultText"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="bg-black/20 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                    <i class="fas fa-random mr-2 text-yellow-400"></i>ランダム名前変更
+                                </label>
+                                <p class="text-xs text-gray-400 mb-2">指定間隔でランダムな名前に変更し続けます（空欄でデフォルト絵文字）</p>
+                                <div class="space-y-2">
+                                    <textarea 
+                                        id="randomNameList" 
+                                        placeholder="カスタム名前リスト（1行に1つ、空欄で🤍💜💛🩷🩵💚💙❤️‍🔥）"
+                                        rows="2"
+                                        class="w-full px-4 py-2 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all resize-none text-sm"
+                                    ></textarea>
+                                    <input 
+                                        type="text"
+                                        id="randomNameSuffix" 
+                                        placeholder="固定サフィックス（例: 名前 → ランダム文字 名前）"
+                                        class="w-full px-4 py-2 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all text-sm"
+                                    />
+                                    <div class="flex gap-2 items-center">
+                                        <span class="text-gray-400 text-xs whitespace-nowrap">間隔</span>
+                                        <input 
+                                            type="number"
+                                            id="randomNameInterval" 
+                                            placeholder="13600"
+                                            min="1000"
+                                            value="13600"
+                                            class="w-20 min-w-0 px-2 py-2 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all text-sm text-center"
+                                        />
+                                        <span class="text-gray-400 text-xs">ms</span>
+                                    </div>
+                                    <div class="flex gap-2 items-center">
+                                        <button 
+                                            onclick="toggleRandomName()" 
+                                            id="randomNameToggleBtn"
+                                            class="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold py-2 px-6 rounded-xl transition-all"
+                                        >
+                                            <i class="fas fa-play mr-1"></i>開始
+                                        </button>
+                                    </div>
+                                    <div id="randomNameStatus" class="hidden p-2 bg-black/30 rounded-lg text-sm">
+                                        <span id="randomNameStatusText" class="text-yellow-400"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="bg-black/20 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                    <i class="fas fa-comments mr-2 text-green-400"></i>スレッド高速作成
+                                </label>
+                                <p class="text-xs text-gray-400 mb-2">複数チャンネルにスレッドを同時並行で高速作成します</p>
+                                <div class="space-y-2">
+                                    <div class="flex gap-2">
+                                        <button 
+                                            onclick="fetchThreadChannels()" 
+                                            id="fetchThreadChannelsBtn"
+                                            class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all text-sm"
+                                        >
+                                            <i class="fas fa-sync-alt mr-1"></i>チャンネル取得
+                                        </button>
+                                        <button 
+                                            onclick="insertThreadChannelIds()" 
+                                            id="insertThreadChannelIdsBtn"
+                                            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all text-sm whitespace-nowrap"
+                                        >
+                                            <i class="fas fa-arrow-down mr-1"></i>ID挿入
+                                        </button>
+                                    </div>
+                                    <div id="threadChannelList" class="max-h-32 overflow-y-auto bg-black/30 border border-white/30 rounded-xl p-2 hidden">
+                                        <div class="text-gray-400 text-xs text-center py-2">チャンネルを取得してください</div>
+                                    </div>
+                                    <textarea 
+                                        id="threadChannelIds"
+                                        placeholder="チャンネルID（1行に1つまたはカンマ区切り）"
+                                        rows="2"
+                                        class="w-full px-4 py-2 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm resize-none"
+                                    ></textarea>
+                                    <div class="flex gap-2 items-center">
+                                        <span class="text-gray-400 text-xs whitespace-nowrap">間隔</span>
+                                        <input 
+                                            type="number"
+                                            id="threadInterval" 
+                                            placeholder="2000"
+                                            min="1000"
+                                            value="2000"
+                                            class="w-20 min-w-0 px-2 py-2 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm text-center"
+                                        />
+                                        <span class="text-gray-400 text-xs">ms</span>
+                                    </div>
+                                    <input 
+                                        type="text"
+                                        id="threadName" 
+                                        placeholder="スレッド名（番号は自動追加）"
+                                        class="w-full px-4 py-2 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm"
+                                    />
+                                    <div class="flex gap-2 items-center">
+                                        <button 
+                                            onclick="toggleThreadCreation()" 
+                                            id="threadCreateToggleBtn"
+                                            class="flex-1 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-2 px-6 rounded-xl transition-all"
+                                        >
+                                            <i class="fas fa-play mr-1"></i>開始
+                                        </button>
+                                    </div>
+                                    <div id="threadCreateStatus" class="hidden p-2 bg-black/30 rounded-lg text-sm">
+                                        <span id="threadCreateStatusText" class="text-green-400"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div class="bg-black/20 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                    <i class="fas fa-users-slash mr-2"></i>全グループDMから退出
+                                </label>
+                                <button 
+                                    onclick="leaveAllGroupDms()" 
+                                    id="leaveAllGroupDmsBtn"
+                                    class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-3 px-4 rounded-xl transition-all"
+                                >
+                                    <i class="fas fa-sign-out-alt mr-2"></i>全グループから退出
+                                </button>
+                                <div id="leaveAllGroupDmsResult" class="hidden mt-2 p-2 bg-black/30 rounded-lg text-sm">
+                                    <span id="leaveAllGroupDmsResultText"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="membersTab">
+                    <div class="p-8">
+                        <button 
+                            onclick="fetchMembers()" 
+                            id="fetchBtn"
+                            class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        >
+                            <i class="fas fa-users mr-2"></i>
+                            メンバーを取得
+                        </button>
+                    </div>
+
+                    <div id="loading" class="hidden p-8 text-center">
+                        <div class="inline-flex items-center space-x-3">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                            <span class="text-white text-lg">メンバーを取得中...</span>
+                        </div>
+                    </div>
+
+                    <div id="results" class="hidden">
+                        <div class="bg-black/20 p-6 border-t border-white/10">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold text-white">
+                                    <i class="fas fa-list mr-2"></i>
+                                    取得結果: <span id="memberCount" class="text-blue-400"></span>人
+                                </h3>
+                                <div class="space-x-2">
+                                    <button onclick="copyAllIds()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-copy mr-1"></i>IDをコピー
+                                    </button>
+                                    <button onclick="downloadCSV()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-download mr-1"></i>CSV出力
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="max-h-96 overflow-y-auto bg-black/30 rounded-xl p-4">
+                                <div id="memberList" class="space-y-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="error" class="hidden p-6 bg-red-500/20 border-t border-red-500/30">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+                            <span id="errorMessage" class="text-red-200"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aankoTab" class="hidden">
+                    <div class="p-8">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-bold text-white mb-4">
+                                <i class="fas fa-robot mr-2 text-pink-400"></i>/aanko Bot コマンド
+                            </h3>
+                            <p class="text-gray-300 text-sm mb-4">
+                                外部コマンドとして使える /aanko Bot。サーバーに入れなくても使えます！
+                            </p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-xl p-6 border border-pink-500/30">
+                                <h4 class="text-white font-semibold mb-3">
+                                    <i class="fas fa-link mr-2"></i>あんこサーバー招待リンク
+                                </h4>
+                                <div class="flex items-center gap-3">
+                                    <input 
+                                        type="text" 
+                                        id="botInviteUrl" 
+                                        value="https://discord.gg/NYmSAdHjWV"
+                                        readonly
+                                        class="flex-1 px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white text-sm"
+                                    >
+                                    <button onclick="copyInviteUrl()" class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-3 rounded-xl transition-colors">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <a id="botInviteLink" href="https://discord.gg/NYmSAdHjWV" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl transition-colors">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </div>
+                                <p class="text-gray-400 text-xs mt-2">
+                                    あんこサバのリンクです
+                                </p>
+                            </div>
+
+                            <div class="bg-white/5 rounded-xl p-6">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-cog mr-2"></i>コマンドの機能
+                                </h4>
+                                <ul class="text-gray-300 space-y-2 text-sm">
+                                    <li><i class="fas fa-check text-green-400 mr-2"></i>「メッセージ」を5回送信</li>
+                                    <li><i class="fas fa-check text-green-400 mr-2"></i>オプション: ランダムメンション機能</li>
+                                    <li><i class="fas fa-check text-green-400 mr-2"></i>各メッセージに64文字をランダム追加</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                                <h4 class="text-yellow-300 font-semibold mb-2">
+                                    <i class="fas fa-users mr-2"></i>ランダムメンション用メンバーID
+                                </h4>
+                                <p class="text-yellow-200 text-sm mb-3">
+                                    サーバーIDとトークンを入力してメンバーを取得してください
+                                </p>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button onclick="fetchMembersFromAankoTab()" id="aankoFetchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-users mr-2"></i>メンバーを取得
+                                    </button>
+                                    <span id="storedMemberCount" class="text-white bg-black/30 px-4 py-2 rounded-lg">
+                                        <i class="fas fa-database mr-2"></i>0 人取得済み
+                                    </span>
+                                    <button onclick="insertMemberIdsToInput()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-arrow-down mr-2"></i>入力欄に挿入
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-xl p-6 border border-orange-500/30 mb-6">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-vial mr-2 text-orange-400"></i>トークンテスト
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    トークンが正しく動作するかテストします。指定したチャンネルに「こんにちは」を1回送信します。
+                                </p>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-hashtag mr-2"></i>テスト用チャンネルID
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="testChannelId" 
+                                            placeholder="メッセージを送信するチャンネルID"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                        >
+                                    </div>
+                                    <button 
+                                        onclick="testToken()" 
+                                        id="testTokenBtn"
+                                        class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                    >
+                                        <i class="fas fa-paper-plane mr-2"></i>
+                                        「こんにちは」を送信してテスト
+                                    </button>
+                                    <button 
+                                        onclick="debugSearchAanko()" 
+                                        id="debugSearchBtn"
+                                        class="w-full mt-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300"
+                                    >
+                                        <i class="fas fa-search mr-2"></i>
+                                        /aanko コマンドを検索（デバッグ）
+                                    </button>
+                                    <div id="testResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl">
+                                        <div id="testResultText" class="text-sm"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-cyan-500/20 to-teal-500/20 rounded-xl p-6 border border-cyan-500/30 mb-6">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-globe mr-2 text-cyan-400"></i>外部コマンドテスト
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    サーバーの全チャンネルの権限をチェックします。<br>
+                                    各チャンネルで外部アプリコマンドが使えるか確認できます。<br>
+                                    <span class="text-green-400">緑</span>：使用可能 / <span class="text-yellow-400">黄</span>：閲覧不可 / <span class="text-red-400">赤</span>：外部コマンド不可
+                                </p>
+                                <div class="space-y-4">
+                                    <button 
+                                        onclick="checkChannelPermissions()" 
+                                        id="checkPermissionsBtn"
+                                        class="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                    >
+                                        <i class="fas fa-shield-alt mr-2"></i>
+                                        全チャンネルの権限をチェック
+                                    </button>
+                                    <div id="externalTestResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl max-h-96 overflow-y-auto">
+                                        <div id="externalTestResultText" class="text-sm"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl p-6 border border-green-500/30">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-paper-plane mr-2 text-green-400"></i>SPMレイド
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    あなたのトークンで直接メッセージを送信します（Botを介さない）
+                                </p>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-comment mr-2"></i>送信メッセージ
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="aankoMessage" 
+                                            placeholder="空欄でデフォルトメッセージ"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                        >
+                                    </div>
+
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="aankoRandomChars" 
+                                                checked
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-green-500 focus:ring-green-500"
+                                            >
+                                            <span class="text-sm font-semibold"><i class="fas fa-random mr-1"></i>ランダム文字を含める（64文字）</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="aankoEveryone" 
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-yellow-500 focus:ring-yellow-500"
+                                            >
+                                            <span class="text-sm font-semibold"><i class="fas fa-bullhorn mr-1 text-yellow-400"></i>@everyone を付ける</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="aankoPollEnabled" 
+                                                onchange="togglePollOptions()"
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-purple-500 focus:ring-purple-500"
+                                            >
+                                            <span class="text-sm font-semibold"><i class="fas fa-poll mr-1 text-purple-400"></i>投票も作成</span>
+                                        </label>
+                                    </div>
+
+                                    <div id="pollOptionsContainer" class="hidden bg-purple-500/10 rounded-xl p-4 border border-purple-500/30 space-y-3">
+                                        <h5 class="text-purple-300 font-semibold text-sm">
+                                            <i class="fas fa-poll mr-2"></i>投票設定
+                                        </h5>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-question-circle mr-2"></i>投票の質問
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                id="aankoPollQuestion" 
+                                                placeholder="例: どれが好き？"
+                                                maxlength="300"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-list-ol mr-2"></i>投票の選択肢（1行に1つ、2〜10個）
+                                            </label>
+                                            <textarea 
+                                                id="aankoPollAnswers" 
+                                                placeholder="選択肢1&#10;選択肢2&#10;選択肢3"
+                                                rows="4"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+                                            ></textarea>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                    <i class="fas fa-clock mr-2"></i>投票期間（時間）
+                                                </label>
+                                                <select 
+                                                    id="aankoPollDuration"
+                                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                                >
+                                                    <option value="1" selected>1時間</option>
+                                                    <option value="4">4時間</option>
+                                                    <option value="8">8時間</option>
+                                                    <option value="24">24時間（1日）</option>
+                                                    <option value="72">72時間（3日）</option>
+                                                    <option value="168">168時間（7日）</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                    <i class="fas fa-check-double mr-2"></i>複数選択
+                                                </label>
+                                                <select 
+                                                    id="aankoPollMultiselect"
+                                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                                >
+                                                    <option value="false">1つだけ選択可</option>
+                                                    <option value="true">複数選択可</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-hashtag mr-2"></i>チャンネルID（複数可）
+                                        </label>
+                                        <div class="flex gap-2 mb-2">
+                                            <button onclick="fetchAllTextChannels()" id="fetchChannelsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors whitespace-nowrap text-sm">
+                                                <i class="fas fa-hashtag mr-1"></i>サーバーの全チャンネルを取得
+                                            </button>
+                                        </div>
+                                        <textarea 
+                                            id="aankoChannelIds" 
+                                            placeholder="カンマか改行で区切って入力&#10;例: 123456789, 987654321&#10;複数チャンネルで同時実行されます"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-at mr-2"></i>メンションするユーザーID（複数可）
+                                        </label>
+                                        <textarea 
+                                            id="aankoUserIds" 
+                                            placeholder="カンマか改行で区切って入力&#10;例: 123456789012345678, 987654321098765432&#10;<@123456789012345678> の形式もOK"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-users mr-2"></i>メンション人数
+                                            </label>
+                                            <div class="flex gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    id="aankoMentionCount" 
+                                                    value="3"
+                                                    class="w-20 px-3 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                                >
+                                                <button onclick="setMentionCountAll()" class="shrink-0 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl transition-colors">
+                                                    All
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-hashtag mr-2"></i>チャンネル毎の送信数
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="aankoPerChannelCount" 
+                                                value="5"
+                                                min="1"
+                                                placeholder="何回送って次のチャンネルへ"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-envelope mr-2"></i>総メッセージ数
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="aankoExecuteCount" 
+                                                value="0"
+                                                min="0"
+                                                placeholder="0=無制限"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-clock mr-2"></i>追加遅延(秒)
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="aankoDelaySeconds" 
+                                                value="0"
+                                                step="0.001"
+                                                min="0"
+                                                placeholder="0=自動最適化"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <button 
+                                            onclick="executeAankoCommand()" 
+                                            id="aankoExecuteBtn"
+                                            class="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                        >
+                                            <i class="fas fa-bolt mr-2"></i>
+                                            高速送信
+                                        </button>
+                                        <button 
+                                            onclick="stopAankoCommand()" 
+                                            id="aankoStopBtn"
+                                            class="hidden bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300"
+                                        >
+                                            <i class="fas fa-stop mr-2"></i>
+                                            停止
+                                        </button>
+                                    </div>
+
+                                    <div id="aankoProgress" class="hidden p-3 bg-black/30 rounded-xl">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-300"><i class="fas fa-spinner fa-spin mr-2"></i>実行中...</span>
+                                            <span id="aankoProgressText" class="text-blue-400">0 / 0 回完了</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="aankoExecuteResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl">
+                                    <h5 class="text-white font-semibold mb-2">実行結果:</h5>
+                                    <div id="aankoResultText" class="text-gray-300 text-sm"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-xl p-6 border border-pink-500/30 mt-6">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-smile mr-2 text-pink-400"></i>ANKOリアクション付与
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    指定チャンネルのメッセージに「ANKO ON TOP」リアクションを新しい順に付けていきます
+                                </p>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-hashtag mr-2"></i>チャンネルID（複数可）
+                                        </label>
+                                        <div class="flex gap-2 mb-2">
+                                            <button onclick="fetchChannelsForReaction()" id="fetchChannelsForReactionBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors whitespace-nowrap text-sm">
+                                                <i class="fas fa-hashtag mr-1"></i>サーバーの全チャンネルを取得
+                                            </button>
+                                        </div>
+                                        <textarea 
+                                            id="reactionChannelIds" 
+                                            placeholder="カンマか改行で区切って入力&#10;例: 123456789, 987654321"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-envelope mr-2"></i>メッセージ数（各チャンネル）
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="reactionMessageCount" 
+                                                value="10"
+                                                min="1"
+                                                max="100"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-clock mr-2"></i>リアクション間隔（秒）
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="reactionDelay" 
+                                                value="0.3"
+                                                min="0.1"
+                                                step="0.1"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="reactionSkipAlreadyReacted" 
+                                                checked
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-pink-500 focus:ring-pink-500"
+                                            >
+                                            <span class="text-sm">既にリアクション済みのメッセージをスキップ</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="bg-black/30 rounded-xl p-3 text-center">
+                                        <p class="text-gray-400 text-sm mb-1">付与されるリアクション:</p>
+                                        <p class="text-2xl">🅰️ 🇳 🇰 🅾️ 😝 🥺 🇹 ⭕ 🇵 🥰 🩵 💚 💜 🧡 🩷</p>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <button 
+                                            onclick="executeReaction()" 
+                                            id="reactionExecuteBtn"
+                                            class="flex-1 bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-700 hover:to-orange-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                        >
+                                            <i class="fas fa-smile mr-2"></i>
+                                            リアクション開始
+                                        </button>
+                                        <button 
+                                            onclick="stopReaction()" 
+                                            id="reactionStopBtn"
+                                            class="hidden bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300"
+                                        >
+                                            <i class="fas fa-stop mr-2"></i>
+                                            停止
+                                        </button>
+                                    </div>
+
+                                    <div id="reactionProgress" class="hidden p-3 bg-black/30 rounded-xl">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-300"><i class="fas fa-spinner fa-spin mr-2"></i>リアクション中...</span>
+                                            <span id="reactionProgressText" class="text-pink-400">0 / 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="reactionResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl">
+                                    <h5 class="text-white font-semibold mb-2">実行結果:</h5>
+                                    <div id="reactionResultText" class="text-gray-300 text-sm"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-xl p-6 border border-indigo-500/30 mt-6">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-bolt mr-2 text-indigo-400"></i>/ahe ボタン作成＆自動クリック
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    /aheコマンドをBot経由で実行します
+                                </p>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-comment mr-2"></i>送信メッセージ
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="aheButtonMessage" 
+                                            placeholder="空欄でデフォルトメッセージ"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        >
+                                    </div>
+
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="aheButtonEveryone" 
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-yellow-500 focus:ring-yellow-500"
+                                            >
+                                            <span class="text-sm font-semibold"><i class="fas fa-bullhorn mr-1 text-yellow-400"></i>@everyone を付ける</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="bg-pink-500/10 border border-pink-500/30 rounded-xl p-4 mb-4">
+                                        <label class="block text-sm font-semibold text-pink-300 mb-2">
+                                            <i class="fas fa-envelope mr-2"></i>DM送信先ユーザーID（任意）
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="aheDmUserId" 
+                                            placeholder="ユーザーIDを入力するとDMで送信（チャンネルIDより優先）"
+                                            class="w-full px-4 py-3 bg-black/30 border border-pink-500/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                                        >
+                                        <p class="text-pink-300 text-xs mt-2">入力するとチャンネルIDは無視され、このユーザーへのDMで実行します</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-hashtag mr-2"></i>チャンネルID（複数可）
+                                        </label>
+                                        <div class="flex gap-2 mb-2">
+                                            <button onclick="fetchAllTextChannelsForAhe()" id="fetchChannelsBtnAhe" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors whitespace-nowrap text-sm">
+                                                <i class="fas fa-hashtag mr-1"></i>サーバーの全チャンネルを取得
+                                            </button>
+                                        </div>
+                                        <textarea 
+                                            id="aheButtonChannelIds" 
+                                            placeholder="カンマか改行で区切って入力&#10;例: 123456789, 987654321&#10;複数チャンネルで同時実行されます"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-at mr-2"></i>メンションするユーザーID（複数可）
+                                        </label>
+                                        <textarea 
+                                            id="aheButtonUserIds" 
+                                            placeholder="カンマか改行で区切って入力&#10;例: 123456789012345678, 987654321098765432&#10;<@123456789012345678> の形式もOK"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-users mr-2"></i>メンション人数
+                                            </label>
+                                            <div class="flex gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    id="aheButtonMentionCount" 
+                                                    value="3"
+                                                    class="w-20 px-3 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                                >
+                                                <button onclick="setMentionCountAllAhe()" class="shrink-0 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl transition-colors">
+                                                    All
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-redo mr-2"></i>総クリック回数
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="aheButtonClickCount" 
+                                                value="99999"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-exchange-alt mr-2"></i>チャンネル毎クリック
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="aheClicksPerChannel" 
+                                                value="1"
+                                                min="1"
+                                                placeholder="1"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            >
+                                            <p class="text-gray-400 text-xs mt-1">例: 6なら6回クリック後に次のチャンネルへ</p>
+                                        </div>
+                                        <div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <button 
+                                            onclick="createAheButtonAndClick()" 
+                                            id="aheButtonExecuteBtn"
+                                            class="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                        >
+                                            <i class="fas fa-bolt mr-2"></i>
+                                            /ahe ボタン作成＆自動クリック
+                                        </button>
+                                        <button 
+                                            onclick="stopAheButtonClick()" 
+                                            id="aheButtonStopBtn"
+                                            class="hidden bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300"
+                                        >
+                                            <i class="fas fa-stop mr-2"></i>
+                                            停止
+                                        </button>
+                                    </div>
+
+                                    <div id="aheButtonProgress" class="hidden p-3 bg-black/30 rounded-xl">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-300"><i class="fas fa-spinner fa-spin mr-2"></i>実行中...</span>
+                                            <span id="aheButtonProgressText" class="text-indigo-400">ボタン作成中...</span>
+                                        </div>
+                                    </div>
+
+                                    <div id="aheButtonResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl">
+                                        <h5 class="text-white font-semibold mb-2">実行結果:</h5>
+                                        <div id="aheButtonResultText" class="text-gray-300 text-sm"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-rose-500/20 to-pink-500/20 rounded-xl p-6 border border-rose-500/30">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-users-cog mr-2 text-rose-400"></i>グルスパ作成
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    フレンドを選んでグループDMを作成します。<br>
+                                    <span class="text-rose-300">一番上に入力したトークンを使用します。2人以上のフレンドIDが必要です。</span>
+                                </p>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-user-friends mr-2"></i>フレンドID（2人以上必須）
+                                        </label>
+                                        <textarea 
+                                            id="groupDmFriendIds" 
+                                            placeholder="フレンドのユーザーIDを入力（カンマか改行で区切り）&#10;例: 123456789012345678&#10;987654321098765432"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-tag mr-2"></i>グループ名（任意）
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                id="groupDmName" 
+                                                placeholder="空欄でデフォルト"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-image mr-2"></i>グループアイコンURL（任意）
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                id="groupDmIcon" 
+                                                placeholder="画像URLを入力（空欄でデフォルト）"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-redo mr-2"></i>作成回数
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="groupDmRepeatCount" 
+                                                value="1"
+                                                min="1"
+                                                placeholder="連続作成する回数"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                <i class="fas fa-clock mr-2"></i>作成間隔（秒）
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                id="groupDmDelaySeconds" 
+                                                value="1"
+                                                min="0.01"
+                                                step="0.01"
+                                                placeholder="各作成の間隔（秒）"
+                                                class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-4 flex-wrap">
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="groupDmSendMessage" 
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-rose-500 focus:ring-rose-500"
+                                            >
+                                            <span class="text-sm font-semibold"><i class="fas fa-envelope mr-1"></i>お知らせメッセージを送る</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 text-gray-200 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                id="groupDmAutoLeave" 
+                                                class="w-5 h-5 rounded bg-black/30 border-white/30 text-orange-500 focus:ring-orange-500"
+                                            >
+                                            <span class="text-sm font-semibold"><i class="fas fa-sign-out-alt mr-1 text-orange-400"></i>作成後に自動で抜ける</span>
+                                        </label>
+                                    </div>
+
+                                    <div id="groupDmMessageContainer" class="hidden">
+                                        <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                            <i class="fas fa-comment-dots mr-2"></i>お知らせメッセージ
+                                        </label>
+                                        <textarea 
+                                            id="groupDmMessage" 
+                                            placeholder="グループに送信するメッセージを入力"
+                                            rows="3"
+                                            class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="flex gap-4">
+                                        <button 
+                                            onclick="createGroupDmBatch()" 
+                                            id="createGroupDmBtn"
+                                            class="flex-1 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                        >
+                                            <i class="fas fa-plus-circle mr-2"></i>
+                                            グループDMを作成
+                                        </button>
+                                        <button 
+                                            onclick="stopGroupDmCreation()" 
+                                            id="stopGroupDmBtn"
+                                            class="hidden bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300"
+                                        >
+                                            <i class="fas fa-stop mr-2"></i>
+                                            停止
+                                        </button>
+                                    </div>
+
+                                    <div id="groupDmProgress" class="hidden p-3 bg-black/30 rounded-xl">
+                                        <div class="flex items-center justify-between text-sm mb-2">
+                                            <span class="text-gray-300"><i class="fas fa-spinner fa-spin mr-2"></i>作成中...</span>
+                                            <span id="groupDmProgressText" class="text-rose-400">0 / 0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-700 rounded-full h-2">
+                                            <div id="groupDmProgressBar" class="bg-gradient-to-r from-rose-500 to-pink-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div id="groupDmResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl">
+                                        <div id="groupDmResultText" class="text-sm"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl p-6 border border-amber-500/30">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-clone mr-2 text-amber-400"></i>おまけメッセージコピペマン
+                                </h4>
+                                <p class="text-gray-300 text-sm mb-4">
+                                    指定したチャンネルからメッセージを記録し、別のチャンネルに再送信します。<br>
+                                    <span class="text-amber-300">記録したメッセージを古い順から送信できます。</span>
+                                </p>
+                                
+                                <div class="space-y-4">
+                                    <div class="bg-black/20 rounded-xl p-4 border border-white/10">
+                                        <h5 class="text-white font-semibold mb-3">
+                                            <i class="fas fa-download mr-2 text-blue-400"></i>ステップ1: メッセージを記録
+                                        </h5>
+                                        
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                    <i class="fas fa-hashtag mr-2"></i>記録元チャンネルID（複数可）
+                                                </label>
+                                                <div class="flex gap-2 mb-2">
+                                                    <button onclick="fetchChannelsForRecord()" id="fetchChannelsForRecordBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors whitespace-nowrap text-sm">
+                                                        <i class="fas fa-hashtag mr-1"></i>サーバーの全チャンネルを取得
+                                                    </button>
+                                                </div>
+                                                <textarea 
+                                                    id="recordChannelIds" 
+                                                    placeholder="メッセージを取得するチャンネルID（カンマか改行で区切り）&#10;例: 123456789012345678"
+                                                    rows="2"
+                                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all resize-none"
+                                                ></textarea>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                        <i class="fas fa-list-ol mr-2"></i>取得メッセージ数（1-100）
+                                                    </label>
+                                                    <input 
+                                                        type="number" 
+                                                        id="recordMessageCount" 
+                                                        value="50"
+                                                        min="1"
+                                                        max="100"
+                                                        class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                                                    >
+                                                </div>
+                                                <div class="flex items-end">
+                                                    <button 
+                                                        onclick="recordMessages()" 
+                                                        id="recordMessagesBtn"
+                                                        class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg"
+                                                    >
+                                                        <i class="fas fa-download mr-2"></i>
+                                                        メッセージを記録
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="recordResult" class="hidden p-3 bg-black/30 rounded-xl">
+                                                <div id="recordResultText" class="text-sm"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-black/20 rounded-xl p-4 border border-white/10">
+                                        <h5 class="text-white font-semibold mb-3">
+                                            <i class="fas fa-upload mr-2 text-green-400"></i>ステップ2: メッセージを再送信
+                                        </h5>
+                                        
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                    <i class="fas fa-key mr-2"></i>記録キー
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    id="replayStorageKey" 
+                                                    placeholder="ステップ1で取得したキー"
+                                                    readonly
+                                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                                >
+                                            </div>
+                                            
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                    <i class="fas fa-hashtag mr-2"></i>送信先チャンネルID（複数可）
+                                                </label>
+                                                <div class="flex gap-2 mb-2">
+                                                    <button onclick="fetchChannelsForReplay()" id="fetchChannelsForReplayBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors whitespace-nowrap text-sm">
+                                                        <i class="fas fa-hashtag mr-1"></i>サーバーの全チャンネルを取得
+                                                    </button>
+                                                </div>
+                                                <textarea 
+                                                    id="replayTargetChannelIds" 
+                                                    placeholder="メッセージを送信するチャンネルID（カンマか改行で区切り）&#10;例: 987654321098765432"
+                                                    rows="2"
+                                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                                                ></textarea>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                        <i class="fas fa-clock mr-2"></i>送信間隔
+                                                    </label>
+                                                    <select 
+                                                        id="replayDelayMs" 
+                                                        class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                                    >
+                                                        <option value="500">0.5秒</option>
+                                                        <option value="1000" selected>1秒</option>
+                                                        <option value="2000">2秒</option>
+                                                        <option value="3000">3秒</option>
+                                                        <option value="5000">5秒</option>
+                                                        <option value="10000">10秒</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                        <i class="fas fa-comment-dots mr-2"></i>末尾追加メッセージ（任意）
+                                                    </label>
+                                                    <input 
+                                                        type="text" 
+                                                        id="replayAppendMessage" 
+                                                        placeholder="各メッセージの末尾に追加"
+                                                        class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                                    >
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                    <i class="fas fa-at mr-2"></i>メンションするユーザーID（任意）
+                                                </label>
+                                                <div class="flex gap-2 mb-2">
+                                                    <button onclick="insertUserIdsForReplay()" id="insertUserIdsForReplayBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-xl transition-colors whitespace-nowrap text-sm">
+                                                        <i class="fas fa-arrow-down mr-1"></i>ユーザーIDを挿入
+                                                    </button>
+                                                    <span id="replayStoredMemberCount" class="text-white bg-black/30 px-3 py-2 rounded-lg text-sm">
+                                                        <i class="fas fa-database mr-1"></i>0 人取得済み
+                                                    </span>
+                                                </div>
+                                                <textarea 
+                                                    id="replayUserIds" 
+                                                    placeholder="例: 123456789012345678, 987654321098765432（空欄でメンションなし）"
+                                                    rows="2"
+                                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                                                ></textarea>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                                        <i class="fas fa-users mr-2"></i>メンション人数
+                                                    </label>
+                                                    <input 
+                                                        type="number" 
+                                                        id="replayMentionCount" 
+                                                        value="0"
+                                                        min="0"
+                                                        class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                                    >
+                                                </div>
+                                                <div class="flex items-end">
+                                                    <label class="flex items-center gap-2 text-gray-200 cursor-pointer w-full py-3">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            id="replayIncludeEveryone" 
+                                                            class="w-5 h-5 rounded bg-black/30 border-white/30 text-yellow-500 focus:ring-yellow-500"
+                                                        >
+                                                        <span class="text-sm font-semibold"><i class="fas fa-bullhorn mr-1 text-yellow-400"></i>@everyone</span>
+                                                    </label>
+                                                </div>
+                                                <div class="flex items-end">
+                                                    <label class="flex items-center gap-2 text-gray-200 cursor-pointer w-full py-3">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            id="replayIncludeRandomChars" 
+                                                            class="w-5 h-5 rounded bg-black/30 border-white/30 text-purple-500 focus:ring-purple-500"
+                                                        >
+                                                        <span class="text-sm font-semibold"><i class="fas fa-random mr-1 text-purple-400"></i>ランダム文字</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex gap-2">
+                                                <button 
+                                                    onclick="replayMessages()" 
+                                                    id="replayMessagesBtn"
+                                                    class="flex-1 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                                >
+                                                    <i class="fas fa-play mr-2"></i>
+                                                    再送信を開始
+                                                </button>
+                                                <button 
+                                                    onclick="cancelReplayMessages()" 
+                                                    id="cancelReplayBtn"
+                                                    class="hidden bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300"
+                                                >
+                                                    <i class="fas fa-stop mr-2"></i>
+                                                    停止
+                                                </button>
+                                            </div>
+
+                                            <div id="replayProgress" class="hidden p-3 bg-black/30 rounded-xl">
+                                                <div class="flex items-center justify-between text-sm mb-2">
+                                                    <span class="text-gray-300"><i class="fas fa-spinner fa-spin mr-2"></i>送信中...</span>
+                                                    <span id="replayProgressText" class="text-amber-400">0 / 0</span>
+                                                </div>
+                                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                                    <div id="replayProgressBar" class="bg-gradient-to-r from-amber-500 to-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                                </div>
+                                            </div>
+
+                                            <div id="replayResult" class="hidden mt-4 p-4 bg-black/30 rounded-xl">
+                                                <div id="replayResultText" class="text-sm"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-black/20 rounded-xl p-6">
+                                <h4 class="text-white font-semibold mb-4">
+                                    <i class="fas fa-terminal mr-2"></i>使い方
+                                </h4>
+                                <div class="bg-black/40 rounded-lg p-4 font-mono text-sm">
+                                    <p class="text-green-400 mb-2">基本</p>
+                                    <p class="text-gray-400 mb-4">→ 基本的に何も入力しなければデフォルト文が使用されます</p>
+                                    <p class="text-gray-400 mb-4">→ エラーバグがあればあんこまで</p>
+                                    <p class="text-yellow-400 mb-2">あんこちゃんに寄付！</p>
+                                    <p class="text-gray-400">→ 100円でも嬉しい！！</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="botStatus" class="p-6 bg-black/20 border-t border-white/10">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div id="botStatusIndicator" class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                                <span id="botStatusText" class="text-white">Bot稼働中</span>
+                            </div>
+                            <button onclick="loadBotInfo()" class="text-blue-400 hover:text-blue-300 text-sm">
+                                <i class="fas fa-refresh mr-1"></i>更新
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="joinerTab" class="hidden">
+                    <div class="p-8">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-bold text-white mb-4">
+                                <i class="fas fa-user-plus mr-2 text-green-400"></i>Discord Guild Joiner
+                            </h3>
+                            <p class="text-gray-300 text-sm mb-4">
+                                上のトークンを使用してDiscordサーバーに自動で参加します
+                            </p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-black/20 rounded-xl p-6">
+                                <label class="block text-sm font-semibold text-gray-200 mb-2">
+                                    <i class="fas fa-link mr-2"></i>招待リンク
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="joinerInvite" 
+                                    placeholder="discord.gg/xxxxx または招待コード"
+                                    class="w-full px-4 py-3 bg-black/30 border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                >
+                            </div>
+
+                            <div class="bg-black/20 rounded-xl p-4">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="joinerStrict" class="w-4 h-4 text-green-600 bg-black/30 border-white/30 rounded focus:ring-green-500">
+                                    <span class="ml-3 text-sm font-semibold text-gray-200">正常実行できない場合にキャンセルする</span>
+                                </label>
+                                <p class="text-gray-500 text-xs mt-2 ml-7">
+                                    サーバー参加時に使用する内部値を正しく取得できない場合に、ランダム値や固定値を使用するのではなく操作をキャンセルするオプションです。
+                                    このオプションを使用すると、Joinerの使用によるトークンの無効化、電話番号認証の要求などを防ぐことができる場合があります。
+                                </p>
+                            </div>
+
+                            <button 
+                                onclick="executeJoiner()" 
+                                id="joinerExecuteBtn"
+                                class="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                            >
+                                <i class="fas fa-play mr-2"></i>
+                                実行
+                            </button>
+
+                            <div id="joinerServerInfo" class="hidden bg-gradient-to-r from-green-500/20 to-teal-500/20 rounded-xl p-4 border border-green-500/30">
+                                <table class="w-full text-sm">
+                                    <tbody>
+                                        <tr>
+                                            <th class="text-left text-gray-300 py-1 pr-4">サーバー名</th>
+                                            <td id="joinerServerName" class="text-white py-1"></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-left text-gray-300 py-1 pr-4">サーバーID</th>
+                                            <td id="joinerServerId" class="text-white py-1 font-mono"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="bg-black/20 rounded-xl p-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-sm font-semibold text-gray-200">
+                                        <i class="fas fa-terminal mr-2"></i>ログ
+                                    </label>
+                                    <label class="flex items-center cursor-pointer text-xs">
+                                        <input type="checkbox" id="joinerAutoScroll" checked class="w-3 h-3 text-green-600 bg-black/30 border-white/30 rounded focus:ring-green-500">
+                                        <span class="ml-2 text-gray-400">自動スクロール</span>
+                                    </label>
+                                </div>
+                                <textarea 
+                                    id="joinerLog" 
+                                    readonly
+                                    rows="10"
+                                    class="w-full px-4 py-3 bg-black/40 border border-white/20 rounded-xl text-green-400 font-mono text-xs resize-none"
+                                ></textarea>
+                            </div>
+
+                            <div id="joinerCaptchaSection" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6">
+                                <h4 class="text-yellow-300 font-semibold mb-3">
+                                    <i class="fas fa-shield-alt mr-2"></i>Captcha認証が必要です
+                                </h4>
+                                <p class="text-yellow-200 text-sm mb-4">
+                                    Captchaが要求された場合、下記にhCaptchaウィジェットが表示されます。
+                                </p>
+                                <div id="joinerCaptchaBox" class="flex justify-center"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto mt-8">
+            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6">
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mt-1"></i>
+                    <div>
+                        <h4 class="text-yellow-300 font-semibold mb-2">あんこbot使い方</h4>
+                        <ul class="text-yellow-200 text-sm space-y-1">
+                            <li>1. 自身のトークンと攻撃するサーバーIDを入れる</li>
+                            <li>2. /aanko Botタブを開いて各機能を使用</li>
+                            <li>3. 楽しむ</li>
+                            <li>4. エラーが起こったらあんこに連絡</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <style>
+        .bg-discord-blurple {
+            background-color: #5865F2;
+        }
+    </style>
+</body>
+</html>

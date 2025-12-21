@@ -1,0 +1,33 @@
+{
+  "name": "discord-member-fetcher",
+  "version": "1.0.0",
+  "description": "Discord server member ID fetcher using user token",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "prestart": "npm install",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@the-convocation/twitter-scraper": "^0.21.0",
+    "axios": "^1.13.2",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "cycletls": "^2.0.5",
+    "discord.js": "^14.25.1",
+    "express": "^4.22.1",
+    "form-data": "^4.0.5",
+    "nodemon": "^3.1.11",
+    "ws": "^8.18.3"
+  },
+  "keywords": [
+    "discord",
+    "api",
+    "members"
+  ],
+  "author": "nonbios",
+  "license": "MIT"
+}
